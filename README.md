@@ -45,6 +45,6 @@ cargo run --release
 
 This project was born out of a personal need to track specific kinesiologic exercises (like Scapular Dyskinesia rehabilitation) methodically. By tracking pain levels and completion rates visually, it's easier to maintain discipline and provide accurate feedback to physical therapists. 
 
-## 📜 License
+## License
 
 This project is licensed under the MIT License.
