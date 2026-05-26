@@ -1,8 +1,8 @@
 use adw::prelude::*;
-use adw::{Application, ApplicationWindow, HeaderBar, ToolbarView, ActionRow, PreferencesGroup, ViewStack, ViewSwitcher, Banner};
-use gtk::{Box, Label, CheckButton, Scale, Entry, Button, Orientation, Separator, Align, ScrolledWindow, glib, Grid};
+use adw::{Application, ApplicationWindow, HeaderBar, ToolbarView, ActionRow, PreferencesGroup, ViewStack, ViewSwitcher, Banner, PreferencesWindow, PreferencesPage, StatusPage};
+use gtk::{Box, Label, CheckButton, Scale, Entry, Button, Orientation, Align, ScrolledWindow, glib, Grid, Switch};
 use serde::{Deserialize, Serialize};
-use chrono::{Local, Duration};
+use chrono::{Local, Duration, Datelike};
 use std::fs::{File, OpenOptions};
 use std::io::{Write, BufRead, BufReader};
 
@@ -17,33 +17,117 @@ struct RegistroSesion {
     ejercicios_totales: usize,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Ejercicio {
-    nombre: &'static str,
-    repeticiones: &'static str,
+    nombre: String,
+    repeticiones: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct Categoria {
-    titulo: &'static str,
+    titulo: String,
+    css_class: String,
     ejercicios: Vec<Ejercicio>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct Configuracion {
+    dias_descanso: Vec<u32>, // 1 = Lunes, 7 = Domingo
+    rutinas: Vec<Categoria>,
+}
+
+impl Default for Configuracion {
+    fn default() -> Self {
+        Self {
+            dias_descanso: vec![7], // Domingo como descanso por defecto
+            rutinas: vec![
+                Categoria {
+                    titulo: "Fase 1: Activación y Movilidad".to_string(),
+                    css_class: "group-blue".to_string(),
+                    ejercicios: vec![
+                        Ejercicio { nombre: "Hundir cabeza y pera en almohada".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Hundir cabeza en almohada".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Pegado a pared brazos en T".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Estiramiento rodillo brazos en pared".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Estiramientos en colchoneta (yoga)".to_string(), repeticiones: "10x3".to_string() },
+                    ],
+                },
+                Categoria {
+                    titulo: "Fase 2: Fortalecimiento Escapular".to_string(),
+                    css_class: "group-green".to_string(),
+                    ejercicios: vec![
+                        Ejercicio { nombre: "Bandita en Y".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Bandita en Y hacia abajo".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Bandita hacia el piso en T".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Bandita cruzada".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Bandita cruzada con mano contr. arriba".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Levantar mancuernas de 2kg".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Superman".to_string(), repeticiones: "10x3".to_string() },
+                    ],
+                },
+                Categoria {
+                    titulo: "Fase 3: Estabilidad de Pie".to_string(),
+                    css_class: "group-purple".to_string(),
+                    ejercicios: vec![
+                        Ejercicio { nombre: "Bandita hacia el pecho".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Banda hacia abajo con brazos rectos".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Banda hacia abajo (brazo en ángulo recto)".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Bandita ángulo recto int. (por brazo)".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Bandita ángulo recto ext. (por brazo)".to_string(), repeticiones: "10x3".to_string() },
+                    ],
+                },
+                Categoria {
+                    titulo: "Fase 4: Resistencia (TRX)".to_string(),
+                    css_class: "group-orange".to_string(),
+                    ejercicios: vec![
+                        Ejercicio { nombre: "Codos pegados al cuerpo, hombros relajados".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Codos separados (T), hombros relajados".to_string(), repeticiones: "10x3".to_string() },
+                        Ejercicio { nombre: "Estiramiento rodillo lateral".to_string(), repeticiones: "10x3".to_string() },
+                    ],
+                },
+            ],
+        }
+    }
 }
 
 fn main() {
     let app = Application::builder().application_id(APP_ID).build();
     
-    // Inyectamos nuestro CSS personalizado para el Heatmap
     app.connect_startup(|_| {
+        let display = gtk::gdk::Display::default().expect("No se pudo conectar al Display");
+        
+        // Agregar nuestra carpeta personalizada de iconos SVG
+        let icon_theme = gtk::IconTheme::for_display(&display);
+        let mut icon_path = std::env::current_dir().unwrap();
+        icon_path.push("src");
+        icon_path.push("icons");
+        icon_theme.add_search_path(&icon_path);
+
         let provider = gtk::CssProvider::new();
-        // Usamos colores verde-azulado (Estilo GitHub oscuro)
+        // Inyectamos CSS para los gráficos y widgets custom nativos
         provider.load_from_string(
             ".heatmap-box { min-width: 42px; min-height: 42px; border-radius: 8px; margin: 4px; }
              .heatmap-0 { background-color: alpha(@theme_fg_color, 0.05); }
              .heatmap-1 { background-color: #a1dab4; }
              .heatmap-2 { background-color: #41b6c4; }
              .heatmap-3 { background-color: #2c7fb8; }
-             .heatmap-4 { background-color: #253494; }"
+             .heatmap-4 { background-color: #253494; }
+             
+             .circle-box { min-width: 40px; min-height: 40px; border-radius: 50%; background-color: alpha(@theme_fg_color, 0.1); margin: 4px; }
+             .circle-box.done { background-color: @success_color; color: white; }
+             
+             .stat-card { background-color: @card_bg_color; border-radius: 12px; padding: 16px; margin: 6px; }
+             .bar-chart-bar { background-color: @warning_color; border-radius: 4px 4px 0 0; min-width: 24px; margin: 2px; }
+
+             /* Colores de acentuación para los grupos de ejercicios */
+             .group-blue list { background-color: alpha(@accent_bg_color, 0.20); }
+             .group-green list { background-color: alpha(@success_color, 0.20); }
+             .group-purple list { background-color: alpha(#c061cb, 0.20); }
+             .group-orange list { background-color: alpha(@warning_color, 0.20); }
+             "
         );
         gtk::style_context_add_provider_for_display(
-            &gtk::gdk::Display::default().expect("No se pudo conectar al Display"),
+            &display,
             &provider,
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
@@ -55,10 +139,10 @@ fn main() {
 
 fn build_ui(app: &Application) {
     let mut history: Vec<RegistroSesion> = Vec::new();
-    let mut path = glib::user_data_dir();
-    path.push("bosu_history.jsonl");
+    let mut history_path = glib::user_data_dir();
+    history_path.push("bosu_history.jsonl");
 
-    if let Ok(file) = File::open(&path) {
+    if let Ok(file) = File::open(&history_path) {
         let reader = BufReader::new(file);
         for line in reader.lines().flatten() {
             if let Ok(registro) = serde_json::from_str::<RegistroSesion>(&line) {
@@ -66,6 +150,17 @@ fn build_ui(app: &Application) {
             }
         }
     }
+
+    let mut config_path = glib::user_data_dir();
+    config_path.push("bosu_config.json");
+    
+    let config = if let Ok(data) = std::fs::read_to_string(&config_path) {
+        serde_json::from_str(&data).unwrap_or_default()
+    } else {
+        let def = Configuracion::default();
+        std::fs::write(&config_path, serde_json::to_string_pretty(&def).unwrap()).unwrap();
+        def
+    };
 
     let mut banner_title = String::new();
     let mut banner_is_error = false;
@@ -97,6 +192,10 @@ fn build_ui(app: &Application) {
         banner.add_css_class("error");
     }
 
+    let hoy_date = Local::now().date_naive();
+    let current_weekday = hoy_date.weekday().number_from_monday();
+    let es_descanso = config.dias_descanso.contains(&current_weekday);
+
     let content_box = Box::builder()
         .orientation(Orientation::Vertical)
         .spacing(18)
@@ -106,136 +205,93 @@ fn build_ui(app: &Application) {
         .margin_end(24)
         .build();
 
-    let main_title = Label::builder()
-        .label("<b>Rutina Actual</b>")
-        .use_markup(true)
-        .halign(Align::Start)
-        .build();
-    content_box.append(&main_title);
+    if es_descanso {
+        let status = StatusPage::builder()
+            .icon_name("non-emergency-healthcare-symbolic")
+            .title("¡Hoy es día de descanso!")
+            .description("Tus músculos también necesitan recuperación. Nos vemos mañana.")
+            .build();
+        content_box.append(&status);
+    } else {
+        let mut check_buttons: Vec<CheckButton> = Vec::new();
+        let mut total_ejercicios = 0;
 
-    let rutina = vec![
-        Categoria {
-            titulo: "Acostado",
-            ejercicios: vec![
-                Ejercicio { nombre: "Hundir cabeza y pera en almohada", repeticiones: "10x3" },
-                Ejercicio { nombre: "Hundir cabeza en almohada", repeticiones: "10x3" },
-                Ejercicio { nombre: "Levantar mancuernas de 2kg", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita hacia el piso en T", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita en Y", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita en Y hacia abajo", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita cruzada", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita cruzada con mano contr. arriba", repeticiones: "10x3" },
-                Ejercicio { nombre: "Superman", repeticiones: "10x3" },
-                Ejercicio { nombre: "Estiramientos en colchoneta (yoga)", repeticiones: "10x3" },
-            ],
-        },
-        Categoria {
-            titulo: "De pie",
-            ejercicios: vec![
-                Ejercicio { nombre: "Bandita hacia el pecho", repeticiones: "10x3" },
-                Ejercicio { nombre: "Banda hacia abajo con brazos rectos", repeticiones: "10x3" },
-                Ejercicio { nombre: "Banda hacia abajo (brazo en ángulo recto)", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita ángulo recto int. (por brazo)", repeticiones: "10x3" },
-                Ejercicio { nombre: "Bandita ángulo recto ext. (por brazo)", repeticiones: "10x3" },
-            ],
-        },
-        Categoria {
-            titulo: "Pared y Rodillo",
-            ejercicios: vec![
-                Ejercicio { nombre: "Pegado a pared brazos en T", repeticiones: "10x3" },
-                Ejercicio { nombre: "Estiramiento rodillo brazos en pared", repeticiones: "10x3" },
-                Ejercicio { nombre: "Estiramiento rodillo lateral", repeticiones: "10x3" },
-            ],
-        },
-        Categoria {
-            titulo: "TRX",
-            ejercicios: vec![
-                Ejercicio { nombre: "Codos pegados al cuerpo, hombros relajados", repeticiones: "10x3" },
-                Ejercicio { nombre: "Codos separados (T), hombros relajados", repeticiones: "10x3" },
-            ],
-        },
-    ];
+        for categoria in config.rutinas {
+            let group = PreferencesGroup::builder().build();
+            group.add_css_class(&categoria.css_class);
 
-    let mut check_buttons: Vec<CheckButton> = Vec::new();
-    let mut total_ejercicios = 0;
+            for ej in categoria.ejercicios {
+                let check = CheckButton::builder().valign(Align::Center).build();
+                check_buttons.push(check.clone());
+                total_ejercicios += 1;
 
-    for categoria in rutina {
-        let group = PreferencesGroup::builder().title(categoria.titulo).build();
-
-        for ej in categoria.ejercicios {
-            let check = CheckButton::builder().valign(Align::Center).build();
-            check_buttons.push(check.clone());
-            total_ejercicios += 1;
-
-            let row = ActionRow::builder()
-                .title(ej.nombre)
-                .subtitle(ej.repeticiones)
-                .activatable_widget(&check)
-                .build();
-            
-            row.add_prefix(&check);
-            group.add(&row);
-        }
-        content_box.append(&group);
-    }
-
-    let separator = Separator::builder().orientation(Orientation::Horizontal).margin_top(12).margin_bottom(12).build();
-    content_box.append(&separator);
-
-    let eval_group = PreferencesGroup::builder().title("Evaluación Post-Sesión").build();
-    let scale_label = Label::builder().label("Nivel de dolor / esfuerzo").halign(Align::Start).margin_bottom(6).build();
-    let scale = Scale::with_range(Orientation::Horizontal, 1.0, 10.0, 1.0);
-    scale.set_value(5.0);
-    scale.set_draw_value(true);
-    let notes_entry = Entry::builder().placeholder_text("Ej. Me dolió el hombro derecho...").build();
-    let save_button = Button::builder().label("Guardar Sesión").css_classes(["suggested-action"]).margin_top(12).build();
-
-    save_button.connect_clicked(glib::clone!(
-        #[weak] scale, 
-        #[weak] notes_entry, 
-        #[strong] check_buttons,
-        move |btn| {
-            let mut completados = 0;
-            for cb in &check_buttons {
-                if cb.is_active() { completados += 1; }
-            }
-
-            let registro = RegistroSesion {
-                fecha: Local::now().format("%Y-%m-%d").to_string(),
-                nivel_molestia: scale.value(),
-                notas: notes_entry.text().to_string(),
-                ejercicios_completados: completados,
-                ejercicios_totales: total_ejercicios,
-            };
-
-            if let Ok(json) = serde_json::to_string(&registro) {
-                let mut path = glib::user_data_dir();
-                path.push("bosu_history.jsonl");
-                if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&path) {
-                    let _ = writeln!(file, "{}", json);
-                }
+                let row = ActionRow::builder()
+                    .title(&ej.nombre)
+                    .subtitle(&ej.repeticiones)
+                    .activatable_widget(&check)
+                    .build();
                 
-                notes_entry.set_text("");
-                scale.set_value(5.0);
-                for cb in &check_buttons { cb.set_active(false); }
-
-                btn.set_label("¡Guardado!");
-                let btn_clone = btn.clone();
-                glib::timeout_add_seconds_local(2, move || {
-                    btn_clone.set_label("Guardar Sesión");
-                    glib::ControlFlow::Break
-                });
+                row.add_prefix(&check);
+                group.add(&row);
             }
+            content_box.append(&group);
         }
-    ));
 
-    let eval_box = Box::builder().orientation(Orientation::Vertical).spacing(12).margin_top(12).margin_bottom(12).margin_start(12).margin_end(12).build();
-    eval_box.append(&scale_label);
-    eval_box.append(&scale);
-    eval_box.append(&notes_entry);
-    eval_box.append(&save_button);
-    eval_group.add(&ActionRow::builder().child(&eval_box).build());
-    content_box.append(&eval_group);
+        let eval_group = PreferencesGroup::builder().title("Evaluación Post-Sesión").margin_top(12).build();
+        let scale_label = Label::builder().label("Nivel de dolor / esfuerzo").halign(Align::Start).margin_bottom(6).build();
+        let scale = Scale::with_range(Orientation::Horizontal, 1.0, 10.0, 1.0);
+        scale.set_value(5.0);
+        scale.set_draw_value(true);
+        let notes_entry = Entry::builder().placeholder_text("Ej. Me dolió el hombro derecho...").build();
+        let save_button = Button::builder().label("Guardar Sesión").css_classes(["suggested-action"]).margin_top(12).build();
+
+        save_button.connect_clicked(glib::clone!(
+            #[weak] scale, 
+            #[weak] notes_entry, 
+            #[strong] check_buttons,
+            move |btn| {
+                let mut completados = 0;
+                for cb in &check_buttons {
+                    if cb.is_active() { completados += 1; }
+                }
+
+                let registro = RegistroSesion {
+                    fecha: Local::now().format("%Y-%m-%d").to_string(),
+                    nivel_molestia: scale.value(),
+                    notas: notes_entry.text().to_string(),
+                    ejercicios_completados: completados,
+                    ejercicios_totales: total_ejercicios,
+                };
+
+                if let Ok(json) = serde_json::to_string(&registro) {
+                    let mut path = glib::user_data_dir();
+                    path.push("bosu_history.jsonl");
+                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&path) {
+                        let _ = writeln!(file, "{}", json);
+                    }
+                    
+                    notes_entry.set_text("");
+                    scale.set_value(5.0);
+                    for cb in &check_buttons { cb.set_active(false); }
+
+                    btn.set_label("¡Guardado!");
+                    let btn_clone = btn.clone();
+                    glib::timeout_add_seconds_local(2, move || {
+                        btn_clone.set_label("Guardar Sesión");
+                        glib::ControlFlow::Break
+                    });
+                }
+            }
+        ));
+
+        let eval_box = Box::builder().orientation(Orientation::Vertical).spacing(12).margin_top(12).margin_bottom(12).margin_start(12).margin_end(12).build();
+        eval_box.append(&scale_label);
+        eval_box.append(&scale);
+        eval_box.append(&notes_entry);
+        eval_box.append(&save_button);
+        eval_group.add(&ActionRow::builder().child(&eval_box).build());
+        content_box.append(&eval_group);
+    }
 
     let hoy_wrapper = Box::builder().orientation(Orientation::Vertical).build();
     hoy_wrapper.append(&banner);
@@ -243,50 +299,117 @@ fn build_ui(app: &Application) {
     let scrolled_hoy = ScrolledWindow::builder().child(&content_box).vexpand(true).build();
     hoy_wrapper.append(&scrolled_hoy);
 
-    // VISTA "PROGRESO" (Heatmap y Estadísticas)
+    // =========================================================================
+    // VISTA "PROGRESO" (DASHBOARD)
+    // =========================================================================
     let progress_box = Box::builder()
         .orientation(Orientation::Vertical)
-        .spacing(18)
+        .spacing(32) // Espaciado mayor entre secciones
         .margin_top(24)
         .margin_start(24)
         .margin_end(24)
+        .margin_bottom(36)
         .build();
 
     let total_sesiones = history.len();
-    let stats_title = Label::builder()
-        .label("<b>Resumen de Rehabilitación</b>")
-        .use_markup(true)
-        .halign(Align::Start)
+    let dolor_promedio = if total_sesiones > 0 {
+        history.iter().map(|r| r.nivel_molestia).sum::<f64>() / total_sesiones as f64
+    } else { 0.0 };
+
+    // --- 1. STAT CARDS ---
+    let stats_grid = Grid::builder()
+        .column_spacing(12)
+        .row_spacing(12)
+        .column_homogeneous(true)
         .build();
 
-    let stats_label = Label::builder()
-        .label(&format!("Sesiones totales registradas: <b>{}</b>", total_sesiones))
-        .use_markup(true)
-        .halign(Align::Start)
-        .build();
+    let create_stat_card = |titulo: &str, valor: &str, icono: Option<&str>| -> Box {
+        let card = Box::builder()
+            .orientation(Orientation::Vertical)
+            .css_classes(["stat-card"])
+            .build();
 
-    progress_box.append(&stats_title);
-    progress_box.append(&stats_label);
+        let val_box = Box::builder().orientation(Orientation::Horizontal).spacing(6).build();
+        let val_label = Label::builder()
+            .label(&format!("<span size='xx-large' weight='bold'>{}</span>", valor))
+            .use_markup(true)
+            .halign(Align::Start)
+            .build();
+        val_box.append(&val_label);
 
-    // --- LÓGICA DEL HEATMAP ---
-    let heatmap_title = Label::builder()
-        .label("<b>Adherencia Mensual (Últimas 5 Semanas)</b>")
-        .use_markup(true)
-        .halign(Align::Start)
-        .margin_top(24)
-        .build();
-    progress_box.append(&heatmap_title);
+        if let Some(icn) = icono {
+            let img = gtk::Image::from_icon_name(icn);
+            img.add_css_class("warning");
+            val_box.append(&img);
+        }
 
-    let heatmap_grid = Grid::builder()
-        .halign(Align::Center)
-        .row_spacing(4)
-        .column_spacing(4)
-        .margin_top(12)
-        .build();
+        let desc_label = Label::builder()
+            .label(titulo)
+            .css_classes(["dim-label"])
+            .halign(Align::Start)
+            .margin_top(4)
+            .build();
 
-    let hoy = Local::now().date_naive();
-    let dias_a_mostrar = 35; // 5 semanas
-    let fecha_inicio = hoy - Duration::days(dias_a_mostrar - 1);
+        card.append(&val_box);
+        card.append(&desc_label);
+        card
+    };
+
+    let card1 = create_stat_card("sesiones totales", &total_sesiones.to_string(), None);
+    let card2 = create_stat_card("dolor promedio", &format!("{:.1}", dolor_promedio), None);
+    
+    // Calcular Racha (días consecutivos recientes)
+    let racha = total_sesiones; // Placeholder simple para la racha por ahora
+    let card3 = create_stat_card("racha actual", &racha.to_string(), Some("emblem-important-symbolic"));
+
+    stats_grid.attach(&card1, 0, 0, 1, 1);
+    stats_grid.attach(&card2, 1, 0, 1, 1);
+    stats_grid.attach(&card3, 0, 1, 1, 1);
+    
+    progress_box.append(&stats_grid);
+
+    // --- 2. ESTA SEMANA (Círculos) ---
+    let sect1_title = Label::builder().label("<b>ESTA SEMANA</b>").use_markup(true).css_classes(["dim-label"]).halign(Align::Start).build();
+    progress_box.append(&sect1_title);
+
+    let semana_box = Box::builder().orientation(Orientation::Horizontal).spacing(8).halign(Align::Center).build();
+    let dias_semana = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    
+    for (i, nombre_dia) in dias_semana.iter().enumerate() {
+        let col = Box::builder().orientation(Orientation::Vertical).spacing(6).build();
+        
+        let circulo = Box::builder()
+            .css_classes(["circle-box"])
+            .halign(Align::Center)
+            .valign(Align::Center)
+            .build();
+        
+        // Simular que chequeamos si hay registro en los últimos 7 días
+        // Calculamos la fecha de ese día de la semana actual
+        let diff = (i as i32) - (current_weekday as i32) + 1; // current_weekday 1-7
+        let dia_obj = hoy_date + Duration::days(diff as i64);
+        let dia_str = dia_obj.format("%Y-%m-%d").to_string();
+
+        if history.iter().any(|r| r.fecha.starts_with(&dia_str)) {
+            circulo.add_css_class("done");
+            let icon = gtk::Image::from_icon_name("emblem-ok-symbolic");
+            circulo.append(&icon);
+        }
+
+        let label = Label::builder().label(*nombre_dia).css_classes(["dim-label"]).build();
+        col.append(&circulo);
+        col.append(&label);
+        semana_box.append(&col);
+    }
+    progress_box.append(&semana_box);
+
+    // --- 3. HEATMAP ---
+    let sect2_title = Label::builder().label("<b>ÚLTIMAS 5 SEMANAS</b>").use_markup(true).css_classes(["dim-label"]).halign(Align::Start).build();
+    progress_box.append(&sect2_title);
+
+    let heatmap_grid = Grid::builder().halign(Align::Center).row_spacing(4).column_spacing(4).build();
+    let dias_a_mostrar = 35; 
+    let fecha_inicio = hoy_date - Duration::days(dias_a_mostrar - 1);
 
     for i in 0..dias_a_mostrar {
         let fecha_actual = fecha_inicio + Duration::days(i);
@@ -295,39 +418,64 @@ fn build_ui(app: &Application) {
         let mut clase_intensidad = "heatmap-0";
         let mut tooltip = format!("{} - Sin registro", fecha_str);
 
-        // Buscar si hubo sesión ese día
         if let Some(sesion) = history.iter().find(|r| r.fecha.starts_with(&fecha_str)) {
             let porcentaje = sesion.ejercicios_completados as f64 / sesion.ejercicios_totales as f64;
-            if porcentaje > 0.8 {
-                clase_intensidad = "heatmap-4";
-            } else if porcentaje > 0.5 {
-                clase_intensidad = "heatmap-3";
-            } else if porcentaje > 0.2 {
-                clase_intensidad = "heatmap-2";
-            } else {
-                clase_intensidad = "heatmap-1";
-            }
+            if porcentaje > 0.8 { clase_intensidad = "heatmap-4"; } 
+            else if porcentaje > 0.5 { clase_intensidad = "heatmap-3"; } 
+            else if porcentaje > 0.2 { clase_intensidad = "heatmap-2"; } 
+            else { clase_intensidad = "heatmap-1"; }
             tooltip = format!("{} - {}% completado (Molestia: {})", fecha_str, (porcentaje * 100.0) as i32, sesion.nivel_molestia);
         }
 
-        let cell = Box::builder()
-            .css_classes(["heatmap-box", clase_intensidad])
-            .tooltip_text(&tooltip)
-            .build();
-
-        // 5 filas (semanas) x 7 columnas (días)
+        let cell = Box::builder().css_classes(["heatmap-box", clase_intensidad]).tooltip_text(&tooltip).build();
         let columna = (i % 7) as i32;
         let fila = (i / 7) as i32;
         heatmap_grid.attach(&cell, columna, fila, 1, 1);
     }
-    
     progress_box.append(&heatmap_grid);
+
+    // --- 4. GRÁFICO BARRAS: DOLOR VS MEJORA ---
+    let sect3_title = Label::builder().label("<b>DOLOR (ÚLTIMAS 7 SESIONES)</b>").use_markup(true).css_classes(["dim-label"]).halign(Align::Start).build();
+    progress_box.append(&sect3_title);
+
+    let bar_container = Box::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(8)
+        .halign(Align::Center)
+        .height_request(100)
+        .build();
+
+    let ultimas_7: Vec<&RegistroSesion> = history.iter().rev().take(7).collect();
+    
+    for i in 0..7 {
+        let box_wrap = Box::builder().orientation(Orientation::Vertical).valign(Align::End).build();
+        let bar = Box::builder().css_classes(["bar-chart-bar"]).build();
+        
+        if i < ultimas_7.len() {
+            let dolor = ultimas_7[i].nivel_molestia;
+            bar.set_height_request((dolor * 10.0) as i32);
+            bar.set_tooltip_text(Some(&format!("Dolor: {}", dolor)));
+            if dolor >= 7.0 {
+                bar.add_css_class("error");
+            } else if dolor <= 3.0 {
+                bar.add_css_class("success");
+            }
+        } else {
+            bar.set_height_request(0);
+        }
+        
+        box_wrap.append(&bar);
+        bar_container.append(&box_wrap);
+    }
+    progress_box.append(&bar_container);
 
     let scrolled_progreso = ScrolledWindow::builder().child(&progress_box).vexpand(true).build();
 
+    // =========================================================================
+
     let view_stack = ViewStack::builder().build();
     view_stack.add_titled_with_icon(&hoy_wrapper, Some("hoy"), "Hoy", "view-list-symbolic");
-    view_stack.add_titled_with_icon(&scrolled_progreso, Some("progreso"), "Progreso", "office-chart-line-symbolic");
+    view_stack.add_titled_with_icon(&scrolled_progreso, Some("progreso"), "Progreso", "charge-symbolic");
 
     let view_switcher = ViewSwitcher::builder()
         .stack(&view_stack)
@@ -338,6 +486,12 @@ fn build_ui(app: &Application) {
         .title_widget(&view_switcher)
         .build();
 
+    let btn_settings = Button::builder()
+        .icon_name("emblem-system-symbolic")
+        .build();
+
+    header_bar.pack_end(&btn_settings);
+
     let toolbar_view = ToolbarView::builder().build();
     toolbar_view.add_top_bar(&header_bar);
     toolbar_view.set_content(Some(&view_stack));
@@ -346,9 +500,52 @@ fn build_ui(app: &Application) {
         .application(app)
         .title("Bosu")
         .default_width(450)
-        .default_height(750)
+        .default_height(800)
         .content(&toolbar_view)
         .build();
+
+    // Lógica para abrir Ventana de Preferencias
+    btn_settings.connect_clicked(glib::clone!(#[weak] window, move |_| {
+        let pref_window = PreferencesWindow::builder()
+            .transient_for(&window)
+            .modal(true)
+            .title("Configuración de Rutinas")
+            .build();
+            
+        let page = PreferencesPage::builder()
+            .title("Calendario y Datos")
+            .icon_name("calendar-alt-symbolic")
+            .build();
+            
+        let group_info = PreferencesGroup::builder()
+            .title("Archivo de Configuración")
+            .description("Toda la estructura de las rutinas y días de descanso ahora se guarda localmente en JSON para que sea 100% editable por ti y completamente privada.")
+            .build();
+            
+        let row_path = ActionRow::builder()
+            .title("Ubicación del Archivo")
+            .subtitle("~/.local/share/bosu_config.json")
+            .build();
+            
+        let btn_open = Button::builder()
+            .label("Abrir Carpeta")
+            .valign(Align::Center)
+            .build();
+            
+        btn_open.connect_clicked(|_| {
+            let path = glib::user_data_dir();
+            let file = gtk::gio::File::for_path(path);
+            if let Err(e) = gtk::gio::AppInfo::launch_default_for_uri(file.uri().as_str(), None::<&gtk::gio::AppLaunchContext>) {
+                eprintln!("Error al abrir carpeta: {}", e);
+            }
+        });
+            
+        row_path.add_suffix(&btn_open);
+        group_info.add(&row_path);
+        page.add(&group_info);
+        pref_window.add(&page);
+        pref_window.present();
+    }));
 
     window.present();
 }
