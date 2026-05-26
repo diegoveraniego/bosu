@@ -1,4 +1,4 @@
-# Bosu 🟢
+# Bosu 
 
 <p align="center">
   <em>A Kinesiological Rehabilitation Tracker built natively for the GNOME Desktop.</em>
@@ -16,7 +16,7 @@
 
 It is built completely in **Rust** using **GTK4** and **Libadwaita**, ensuring a gorgeous, native, and perfectly integrated experience on any modern Linux desktop (GNOME 45+).
 
-## ✨ Features
+## Features
 
 - **Native GNOME Experience**: Fully compliant with the GNOME Human Interface Guidelines (HIG). Uses `AdwViewSwitcher`, `AdwPreferencesGroup`, and native symbolic iconography.
 - **Intelligent Kinesiology Alerts**: Built-in analytics act as a virtual physical therapist. It analyzes your pain trends and uses `AdwBanner` to suggest increasing weights or consulting your doctor.
@@ -24,7 +24,7 @@ It is built completely in **Rust** using **GTK4** and **Libadwaita**, ensuring a
 - **Progress Dashboard**: View your current streak, average pain levels, and a custom native Bar Chart tracking your pain vs. improvement over the last 7 sessions.
 - **Local-First & Private**: Your health data is yours. Bosu saves everything locally in `~/.local/share/bosu_history.jsonl` using efficient JSON serialization. No cloud, no telemetry.
 
-## 🛠️ Installation & Building
+## Installation & Building
 
 Make sure you have Rust and the GTK4 development libraries installed on your system.
 
@@ -41,7 +41,7 @@ cd bosu
 cargo run --release
 ```
 
-## 🧠 Motivation
+## Motivation
 
 This project was born out of a personal need to track specific kinesiologic exercises (like Scapular Dyskinesia rehabilitation) methodically. By tracking pain levels and completion rates visually, it's easier to maintain discipline and provide accurate feedback to physical therapists. 
 
