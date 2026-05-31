@@ -35,16 +35,28 @@ pub struct Categoria {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Rutina {
+    pub id: String,
+    pub nombre: String,
+    pub meta_semanal: u32,
+    pub secciones: Vec<Categoria>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Configuracion {
-    pub dias_descanso: Vec<u32>, // 1 = Lunes, 7 = Domingo
-    pub rutinas: Vec<Categoria>,
+    pub rutinas: Vec<Rutina>,
+    pub ultima_rutina_seleccionada: Option<String>,
 }
 
 impl Default for Configuracion {
     fn default() -> Self {
         Self {
-            dias_descanso: vec![7], // Domingo como descanso por defecto
             rutinas: vec![
+                Rutina {
+                    id: "default_rutina_1".to_string(),
+                    nombre: "Rutina Principal".to_string(),
+                    meta_semanal: 3,
+                    secciones: vec![
                 Categoria {
                     titulo: "Fase 1: Activación y Movilidad".to_string(),
                     css_class: "group-blue".to_string(),
@@ -89,7 +101,10 @@ impl Default for Configuracion {
                         Ejercicio { nombre: "Estiramiento rodillo lateral".to_string(), repeticiones: "10x3".to_string() },
                     ],
                 },
+                    ],
+                }
             ],
+            ultima_rutina_seleccionada: None,
         }
     }
 }
@@ -319,8 +334,14 @@ fn build_ui(app: &Application) {
         let dia_obj = hoy_date + Duration::days(diff as i64);
         let dia_str = dia_obj.format("%Y-%m-%d").to_string();
 
-        if history.iter().any(|r| r.fecha.starts_with(&dia_str)) {
+        if let Some(sesion) = history.iter().find(|r| r.fecha.starts_with(&dia_str)) {
             circulo.add_css_class("done");
+            let porcentaje = if sesion.ejercicios_totales > 0 {
+                sesion.ejercicios_completados as f64 / sesion.ejercicios_totales as f64
+            } else {
+                1.0
+            };
+            circulo.set_opacity(porcentaje.max(0.15));
         }
 
         let label = Label::builder().label(*nombre_dia).css_classes(["dim-label"]).build();
@@ -453,26 +474,69 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
     }
 
     let config = config_rc.borrow().clone();
-    let hoy_date = Local::now().date_naive();
-    let current_weekday = hoy_date.weekday().number_from_monday();
-    let es_descanso = config.dias_descanso.contains(&current_weekday);
 
-    if es_descanso {
-        let status = StatusPage::builder()
-            .icon_name("non-emergency-healthcare-symbolic")
-            .title("¡Hoy es día de descanso!")
-            .description("Tus músculos también necesitan recuperación. Nos vemos mañana.")
-            .build();
-        content_box.append(&status);
-    } else {
+    let mut options = Vec::new();
+    options.push("Día de Descanso".to_string());
+    for r in &config.rutinas {
+        options.push(r.nombre.clone());
+    }
+    let string_list = gtk::StringList::new(&options.iter().map(|s| s.as_str()).collect::<Vec<&str>>());
+    
+    let dropdown = gtk::DropDown::builder()
+        .model(&string_list)
+        .valign(gtk::Align::Center)
+        .build();
+
+    let mut selected_idx = 0;
+    if let Some(ref sel_id) = config.ultima_rutina_seleccionada {
+        if let Some(pos) = config.rutinas.iter().position(|r| r.id == *sel_id) {
+            selected_idx = (pos + 1) as u32;
+        }
+    }
+    dropdown.set_selected(selected_idx);
+
+    let selector_box = Box::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(12)
+        .halign(Align::Center)
+        .margin_bottom(12)
+        .build();
+    selector_box.append(&Label::builder().label("Rutina de hoy:").build());
+    selector_box.append(&dropdown);
+    content_box.append(&selector_box);
+
+    let sections_container = Box::builder().orientation(Orientation::Vertical).spacing(18).build();
+    content_box.append(&sections_container);
+
+    let config_clone = config_rc.clone();
+    let sections_container_clone = sections_container.clone();
+
+    let render_sections = Rc::new(move |selected_idx: u32, container: &Box| {
+        while let Some(child) = container.first_child() {
+            container.remove(&child);
+        }
+
+        if selected_idx == 0 {
+            let status = StatusPage::builder()
+                .icon_name("non-emergency-healthcare-symbolic")
+                .title("¡Hoy es día de descanso!")
+                .description("Tus músculos también necesitan recuperación. Nos vemos mañana.")
+                .build();
+            container.append(&status);
+            return;
+        }
+
+        let cfg = config_clone.borrow();
+        let rutina = &cfg.rutinas[(selected_idx - 1) as usize];
+
         let mut check_buttons: Vec<CheckButton> = Vec::new();
         let mut total_ejercicios = 0;
 
-        for categoria in config.rutinas {
+        for categoria in &rutina.secciones {
             let group = PreferencesGroup::builder().build();
             group.add_css_class(&categoria.css_class);
 
-            for ej in categoria.ejercicios {
+            for ej in &categoria.ejercicios {
                 let check = CheckButton::builder().valign(Align::Center).build();
                 check_buttons.push(check.clone());
                 total_ejercicios += 1;
@@ -486,10 +550,10 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
                 row.add_prefix(&check);
                 group.add(&row);
             }
-            content_box.append(&group);
+            container.append(&group);
         }
 
-        let eval_group = PreferencesGroup::builder().title("Evaluación Post-Sesión").margin_top(12).build();
+        let eval_group = PreferencesGroup::builder().margin_top(12).build();
         let scale_label = Label::builder().label("Nivel de dolor / esfuerzo").halign(Align::Start).margin_bottom(6).build();
         let scale = Scale::with_range(Orientation::Horizontal, 1.0, 10.0, 1.0);
         scale.set_value(5.0);
@@ -542,6 +606,28 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
         eval_box.append(&notes_entry);
         eval_box.append(&save_button);
         eval_group.add(&ActionRow::builder().child(&eval_box).build());
-        content_box.append(&eval_group);
-    }
+        container.append(&eval_group);
+    });
+
+    render_sections(selected_idx, &sections_container);
+
+    let render_sections_cb = render_sections.clone();
+    let cfg_save = config_rc.clone();
+    dropdown.connect_selected_notify(move |dd| {
+        let idx = dd.selected();
+        render_sections_cb(idx, &sections_container_clone);
+        
+        if idx > 0 {
+            let id = cfg_save.borrow().rutinas[(idx - 1) as usize].id.clone();
+            cfg_save.borrow_mut().ultima_rutina_seleccionada = Some(id);
+        } else {
+            cfg_save.borrow_mut().ultima_rutina_seleccionada = None;
+        }
+        
+        let mut path = glib::user_data_dir();
+        path.push("bosu_config.json");
+        if let Ok(json) = serde_json::to_string_pretty(&*cfg_save.borrow()) {
+            let _ = std::fs::write(path, json);
+        }
+    });
 }
