@@ -19,6 +19,8 @@ pub struct RegistroSesion {
     pub notas: String,
     pub ejercicios_completados: usize,
     pub ejercicios_totales: usize,
+    #[serde(default)]
+    pub rutina_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -153,6 +155,9 @@ fn main() {
              .group-green list { background-color: alpha(@success_color, 0.20); }
              .group-purple list { background-color: alpha(#c061cb, 0.20); }
              .group-orange list { background-color: alpha(@warning_color, 0.20); }
+             
+             .pill { min-width: 24px; min-height: 12px; border-radius: 6px; background-color: alpha(@theme_fg_color, 0.1); margin: 2px; }
+             .pill.done { background-color: @accent_bg_color; }
              "
         );
         gtk::style_context_add_provider_for_display(
@@ -225,6 +230,31 @@ fn build_ui(app: &Application) {
 
     let hoy_date = Local::now().date_naive();
     let current_weekday = hoy_date.weekday().number_from_monday();
+    let days_from_monday = current_weekday - 1;
+    let monday_date = hoy_date - Duration::days(days_from_monday as i64);
+
+    let days_left = 7 - current_weekday;
+    if days_left <= 2 {
+        let mut total_pending = 0;
+        let config_borrowed = config_rc.borrow();
+        for rutina in &config_borrowed.rutinas {
+            let count_this_week = history.iter().filter(|r| {
+                if let Ok(d) = chrono::NaiveDate::parse_from_str(&r.fecha, "%Y-%m-%d") {
+                    d >= monday_date && r.rutina_id.as_deref() == Some(rutina.id.as_str()) && r.ejercicios_completados > 0
+                } else {
+                    false
+                }
+            }).count();
+            if count_this_week < rutina.meta_semanal as usize {
+                total_pending += (rutina.meta_semanal as usize) - count_this_week;
+            }
+        }
+        if total_pending as u32 > days_left + 1 { // Include today
+            let notif = gtk::gio::Notification::new("Bosu - Rutinas Pendientes");
+            notif.set_body(Some(&format!("Te faltan {} rutinas y solo quedan {} días. ¡No te rindas!", total_pending, days_left + 1)));
+            app.send_notification(Some("bosu-pending"), &notif);
+        }
+    }
 
     let content_box = Box::builder()
         .orientation(Orientation::Vertical)
@@ -259,6 +289,41 @@ fn build_ui(app: &Application) {
     let dolor_promedio = if total_sesiones > 0 {
         history.iter().map(|r| r.nivel_molestia).sum::<f64>() / total_sesiones as f64
     } else { 0.0 };
+
+    let sect0_title = Label::builder().label("<b>META SEMANAL</b>").use_markup(true).css_classes(["dim-label"]).halign(Align::Start).build();
+    progress_box.append(&sect0_title);
+
+    let goals_group = PreferencesGroup::builder().build();
+    let config_borrowed2 = config_rc.borrow();
+    for rutina in &config_borrowed2.rutinas {
+        let count_this_week = history.iter().filter(|r| {
+            if let Ok(d) = chrono::NaiveDate::parse_from_str(&r.fecha, "%Y-%m-%d") {
+                d >= monday_date && r.rutina_id.as_deref() == Some(rutina.id.as_str()) && r.ejercicios_completados > 0
+            } else {
+                false
+            }
+        }).count();
+
+        let row = ActionRow::builder()
+            .title(&rutina.nombre)
+            .build();
+
+        let pills_box = Box::builder().orientation(Orientation::Horizontal).spacing(4).valign(Align::Center).build();
+        
+        for i in 0..rutina.meta_semanal {
+            let pill = Box::builder()
+                .css_classes(["pill"])
+                .build();
+            if (i as usize) < count_this_week {
+                pill.add_css_class("done");
+            }
+            pills_box.append(&pill);
+        }
+        
+        row.add_suffix(&pills_box);
+        goals_group.add(&row);
+    }
+    progress_box.append(&goals_group);
 
     // --- 1. STAT CARDS ---
     let stats_grid = Grid::builder()
@@ -561,6 +626,7 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
         let notes_entry = Entry::builder().placeholder_text("Ej. Me dolió el hombro derecho...").build();
         let save_button = Button::builder().label("Guardar Sesión").css_classes(["suggested-action"]).margin_top(12).build();
 
+        let cfg_save_clone = config_clone.clone();
         save_button.connect_clicked(glib::clone!(
             #[weak] scale, 
             #[weak] notes_entry, 
@@ -571,12 +637,19 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
                     if cb.is_active() { completados += 1; }
                 }
 
+                let id_rutina = if selected_idx > 0 {
+                    Some(cfg_save_clone.borrow().rutinas[(selected_idx - 1) as usize].id.clone())
+                } else {
+                    None
+                };
+
                 let registro = RegistroSesion {
                     fecha: Local::now().format("%Y-%m-%d").to_string(),
                     nivel_molestia: scale.value(),
                     notas: notes_entry.text().to_string(),
                     ejercicios_completados: completados,
                     ejercicios_totales: total_ejercicios,
+                    rutina_id: id_rutina,
                 };
 
                 if let Ok(json) = serde_json::to_string(&registro) {

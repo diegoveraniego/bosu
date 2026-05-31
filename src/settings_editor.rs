@@ -1,9 +1,9 @@
 use adw::prelude::*;
 use adw::{PreferencesWindow, PreferencesPage, PreferencesGroup, ActionRow, ExpanderRow, EntryRow, ApplicationWindow, SpinRow};
-use gtk::{Box, Button, Align, Orientation, glib};
+use gtk::{Box, Button, Align, Orientation, glib, FileDialog, gio};
 use std::rc::Rc;
 use std::cell::RefCell;
-use crate::{Configuracion, Rutina, Categoria, Ejercicio};
+use crate::{Configuracion, Rutina, Categoria, Ejercicio, RegistroSesion};
 
 pub fn show_settings_window<F>(
     parent: &ApplicationWindow,
@@ -48,6 +48,47 @@ pub fn show_settings_window<F>(
 
     row_path.add_suffix(&btn_open);
     group_info.add(&row_path);
+    
+    let btn_export = Button::builder().label("Exportar Respaldo").valign(Align::Center).build();
+    let row_export = ActionRow::builder().title("Exportar").subtitle("Guardar archivos en otra carpeta").build();
+    let parent_clone1 = parent.clone();
+    btn_export.connect_clicked(move |_| {
+        let dialog = FileDialog::builder().title("Seleccionar Carpeta para Respaldar").build();
+        dialog.select_folder(Some(&parent_clone1), gio::Cancellable::NONE, move |res| {
+            if let Ok(folder) = res {
+                let mut src_config = glib::user_data_dir(); src_config.push("bosu_config.json");
+                let mut src_hist = glib::user_data_dir(); src_hist.push("bosu_history.jsonl");
+                if let Some(path) = folder.path() {
+                    let _ = std::fs::copy(&src_config, path.join("bosu_config.json"));
+                    let _ = std::fs::copy(&src_hist, path.join("bosu_history.jsonl"));
+                }
+            }
+        });
+    });
+    row_export.add_suffix(&btn_export);
+    group_info.add(&row_export);
+
+    let btn_import = Button::builder().label("Importar Respaldo").valign(Align::Center).css_classes(["destructive-action"]).build();
+    let row_import = ActionRow::builder().title("Importar").subtitle("Sobrescribir con archivos de respaldo").build();
+    let parent_clone2 = parent.clone();
+    btn_import.connect_clicked(move |_| {
+        let dialog = FileDialog::builder().title("Seleccionar Carpeta de Respaldo").build();
+        dialog.select_folder(Some(&parent_clone2), gio::Cancellable::NONE, move |res| {
+            if let Ok(folder) = res {
+                let mut dst_config = glib::user_data_dir(); dst_config.push("bosu_config.json");
+                let mut dst_hist = glib::user_data_dir(); dst_hist.push("bosu_history.jsonl");
+                if let Some(path) = folder.path() {
+                    let src_config = path.join("bosu_config.json");
+                    let src_hist = path.join("bosu_history.jsonl");
+                    if src_config.exists() { let _ = std::fs::copy(&src_config, dst_config); }
+                    if src_hist.exists() { let _ = std::fs::copy(&src_hist, dst_hist); }
+                }
+            }
+        });
+    });
+    row_import.add_suffix(&btn_import);
+    group_info.add(&row_import);
+
     page_calendar.add(&group_info);
     pref_window.add(&page_calendar);
 
@@ -98,7 +139,80 @@ pub fn show_settings_window<F>(
     page_editor.add(&pg_bottom);
 
     pref_window.add(&page_editor);
+
+    // ==========================================
+    // PAGE: HISTORIAL
+    // ==========================================
+    let page_history = PreferencesPage::builder()
+        .title("Historial")
+        .icon_name("view-list-symbolic")
+        .build();
+
+    let history_group = PreferencesGroup::builder().title("Sesiones Guardadas").build();
+    
+    let mut history: Vec<RegistroSesion> = Vec::new();
+    let mut path_hist = glib::user_data_dir();
+    path_hist.push("bosu_history.jsonl");
+    if let Ok(lines) = std::fs::read_to_string(&path_hist) {
+        for line in lines.lines() {
+            if let Ok(r) = serde_json::from_str::<RegistroSesion>(line) {
+                history.push(r);
+            }
+        }
+    }
+
+    history.reverse(); // Mostrar los más recientes primero
+
+    let hist_rc = Rc::new(RefCell::new(history));
+
+    render_history(&history_group, hist_rc, path_hist);
+
+    page_history.add(&history_group);
+    pref_window.add(&page_history);
+
     pref_window.present();
+}
+
+fn render_history(group: &PreferencesGroup, hist_rc: Rc<RefCell<Vec<RegistroSesion>>>, path_hist: std::path::PathBuf) {
+    // Clear old rows by iterating backwards
+    let mut child = group.last_child();
+    while let Some(c) = child {
+        child = c.prev_sibling();
+        group.remove(&c);
+    }
+
+    for (idx, sesion) in hist_rc.borrow().iter().enumerate() {
+        let row = ActionRow::builder()
+            .title(&sesion.fecha)
+            .subtitle(&format!("Ejercicios: {}/{} | Esfuerzo: {}", sesion.ejercicios_completados, sesion.ejercicios_totales, sesion.nivel_molestia))
+            .build();
+            
+        let btn_del = Button::builder().icon_name("user-trash-symbolic").css_classes(["destructive-action"]).valign(Align::Center).build();
+        
+        let hist_clone = hist_rc.clone();
+        let group_clone = group.clone();
+        let path_clone = path_hist.clone();
+        
+        btn_del.connect_clicked(move |_| {
+            hist_clone.borrow_mut().remove(idx);
+            
+            // Reescribir historial (necesita invertirse de nuevo para guardar cronológicamente)
+            if let Ok(mut file) = std::fs::File::create(&path_clone) {
+                use std::io::Write;
+                let mut to_save = hist_clone.borrow().clone();
+                to_save.reverse();
+                for r in to_save {
+                    if let Ok(json) = serde_json::to_string(&r) {
+                        let _ = writeln!(file, "{}", json);
+                    }
+                }
+            }
+            render_history(&group_clone, hist_clone.clone(), path_clone.clone());
+        });
+
+        row.add_suffix(&btn_del);
+        group.add(&row);
+    }
 }
 
 fn render_editor(page: &PreferencesPage, temp_config: Rc<RefCell<Configuracion>>, widgets: Rc<RefCell<Vec<PreferencesGroup>>>) {
