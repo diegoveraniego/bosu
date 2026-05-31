@@ -1,9 +1,27 @@
 [Icon Theme]
-Name=BosuCustom
-Comment=Custom local icons for Bosu
-Directories=scalable/actions
+Name=hicolor
+Comment=Custom icons for Bosu bundled with the app
+Directories=scalable/actions,scalable/status,scalable/categories,scalable/mimetypes
 
 [scalable/actions]
+Size=16
+MinSize=16
+MaxSize=512
+Type=Scalable
+
+[scalable/status]
+Size=16
+MinSize=16
+MaxSize=512
+Type=Scalable
+
+[scalable/categories]
+Size=16
+MinSize=16
+MaxSize=512
+Type=Scalable
+
+[scalable/mimetypes]
 Size=16
 MinSize=16
 MaxSize=512

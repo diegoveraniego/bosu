@@ -1,39 +1,43 @@
 use adw::prelude::*;
 use adw::{Application, ApplicationWindow, HeaderBar, ToolbarView, ActionRow, PreferencesGroup, ViewStack, ViewSwitcher, Banner, PreferencesWindow, PreferencesPage, StatusPage};
-use gtk::{Box, Label, CheckButton, Scale, Entry, Button, Orientation, Align, ScrolledWindow, glib, Grid, Switch};
+use gtk::{Box, Label, CheckButton, Scale, Entry, Button, Orientation, Align, ScrolledWindow, glib, Grid};
 use serde::{Deserialize, Serialize};
 use chrono::{Local, Duration, Datelike};
 use std::fs::{File, OpenOptions};
 use std::io::{Write, BufRead, BufReader};
+use std::rc::Rc;
+use std::cell::RefCell;
+
+mod settings_editor;
 
 const APP_ID: &str = "org.diego.Bosu";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct RegistroSesion {
-    fecha: String,
-    nivel_molestia: f64,
-    notas: String,
-    ejercicios_completados: usize,
-    ejercicios_totales: usize,
+pub struct RegistroSesion {
+    pub fecha: String,
+    pub nivel_molestia: f64,
+    pub notas: String,
+    pub ejercicios_completados: usize,
+    pub ejercicios_totales: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Ejercicio {
-    nombre: String,
-    repeticiones: String,
+pub struct Ejercicio {
+    pub nombre: String,
+    pub repeticiones: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Categoria {
-    titulo: String,
-    css_class: String,
-    ejercicios: Vec<Ejercicio>,
+pub struct Categoria {
+    pub titulo: String,
+    pub css_class: String,
+    pub ejercicios: Vec<Ejercicio>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Configuracion {
-    dias_descanso: Vec<u32>, // 1 = Lunes, 7 = Domingo
-    rutinas: Vec<Categoria>,
+pub struct Configuracion {
+    pub dias_descanso: Vec<u32>, // 1 = Lunes, 7 = Domingo
+    pub rutinas: Vec<Categoria>,
 }
 
 impl Default for Configuracion {
@@ -96,12 +100,22 @@ fn main() {
     app.connect_startup(|_| {
         let display = gtk::gdk::Display::default().expect("No se pudo conectar al Display");
         
-        // Agregar nuestra carpeta personalizada de iconos SVG
+        // Agregar nuestra carpeta personalizada de iconos SVG.
+        // Usamos el directorio del binario en vez de current_dir(),
+        // para que funcione tanto desde terminal como desde el menú de GNOME.
         let icon_theme = gtk::IconTheme::for_display(&display);
-        let mut icon_path = std::env::current_dir().unwrap();
-        icon_path.push("src");
-        icon_path.push("icons");
-        icon_theme.add_search_path(&icon_path);
+        if let Ok(exe_path) = std::env::current_exe() {
+            // En desarrollo: <proyecto>/target/release/bosu → busca en src/icons
+            if let Some(exe_dir) = exe_path.parent() {
+                let dev_icons = exe_dir
+                    .join("../../src/icons");
+                if dev_icons.exists() {
+                    icon_theme.add_search_path(&dev_icons);
+                }
+            }
+        }
+        // El ícono principal (org.diego.Bosu.svg) ya está en
+        // ~/.local/share/icons/hicolor/scalable/apps/ — GTK lo encuentra solo.
 
         let provider = gtk::CssProvider::new();
         // Inyectamos CSS para los gráficos y widgets custom nativos
@@ -162,6 +176,8 @@ fn build_ui(app: &Application) {
         def
     };
 
+    let config_rc = Rc::new(RefCell::new(config));
+
     let mut banner_title = String::new();
     let mut banner_is_error = false;
     let mut show_banner = false;
@@ -194,7 +210,6 @@ fn build_ui(app: &Application) {
 
     let hoy_date = Local::now().date_naive();
     let current_weekday = hoy_date.weekday().number_from_monday();
-    let es_descanso = config.dias_descanso.contains(&current_weekday);
 
     let content_box = Box::builder()
         .orientation(Orientation::Vertical)
@@ -205,93 +220,7 @@ fn build_ui(app: &Application) {
         .margin_end(24)
         .build();
 
-    if es_descanso {
-        let status = StatusPage::builder()
-            .icon_name("non-emergency-healthcare-symbolic")
-            .title("¡Hoy es día de descanso!")
-            .description("Tus músculos también necesitan recuperación. Nos vemos mañana.")
-            .build();
-        content_box.append(&status);
-    } else {
-        let mut check_buttons: Vec<CheckButton> = Vec::new();
-        let mut total_ejercicios = 0;
-
-        for categoria in config.rutinas {
-            let group = PreferencesGroup::builder().build();
-            group.add_css_class(&categoria.css_class);
-
-            for ej in categoria.ejercicios {
-                let check = CheckButton::builder().valign(Align::Center).build();
-                check_buttons.push(check.clone());
-                total_ejercicios += 1;
-
-                let row = ActionRow::builder()
-                    .title(&ej.nombre)
-                    .subtitle(&ej.repeticiones)
-                    .activatable_widget(&check)
-                    .build();
-                
-                row.add_prefix(&check);
-                group.add(&row);
-            }
-            content_box.append(&group);
-        }
-
-        let eval_group = PreferencesGroup::builder().title("Evaluación Post-Sesión").margin_top(12).build();
-        let scale_label = Label::builder().label("Nivel de dolor / esfuerzo").halign(Align::Start).margin_bottom(6).build();
-        let scale = Scale::with_range(Orientation::Horizontal, 1.0, 10.0, 1.0);
-        scale.set_value(5.0);
-        scale.set_draw_value(true);
-        let notes_entry = Entry::builder().placeholder_text("Ej. Me dolió el hombro derecho...").build();
-        let save_button = Button::builder().label("Guardar Sesión").css_classes(["suggested-action"]).margin_top(12).build();
-
-        save_button.connect_clicked(glib::clone!(
-            #[weak] scale, 
-            #[weak] notes_entry, 
-            #[strong] check_buttons,
-            move |btn| {
-                let mut completados = 0;
-                for cb in &check_buttons {
-                    if cb.is_active() { completados += 1; }
-                }
-
-                let registro = RegistroSesion {
-                    fecha: Local::now().format("%Y-%m-%d").to_string(),
-                    nivel_molestia: scale.value(),
-                    notas: notes_entry.text().to_string(),
-                    ejercicios_completados: completados,
-                    ejercicios_totales: total_ejercicios,
-                };
-
-                if let Ok(json) = serde_json::to_string(&registro) {
-                    let mut path = glib::user_data_dir();
-                    path.push("bosu_history.jsonl");
-                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&path) {
-                        let _ = writeln!(file, "{}", json);
-                    }
-                    
-                    notes_entry.set_text("");
-                    scale.set_value(5.0);
-                    for cb in &check_buttons { cb.set_active(false); }
-
-                    btn.set_label("¡Guardado!");
-                    let btn_clone = btn.clone();
-                    glib::timeout_add_seconds_local(2, move || {
-                        btn_clone.set_label("Guardar Sesión");
-                        glib::ControlFlow::Break
-                    });
-                }
-            }
-        ));
-
-        let eval_box = Box::builder().orientation(Orientation::Vertical).spacing(12).margin_top(12).margin_bottom(12).margin_start(12).margin_end(12).build();
-        eval_box.append(&scale_label);
-        eval_box.append(&scale);
-        eval_box.append(&notes_entry);
-        eval_box.append(&save_button);
-        eval_group.add(&ActionRow::builder().child(&eval_box).build());
-        content_box.append(&eval_group);
-    }
+    populate_home_view(&content_box, config_rc.clone());
 
     let hoy_wrapper = Box::builder().orientation(Orientation::Vertical).build();
     hoy_wrapper.append(&banner);
@@ -392,8 +321,6 @@ fn build_ui(app: &Application) {
 
         if history.iter().any(|r| r.fecha.starts_with(&dia_str)) {
             circulo.add_css_class("done");
-            let icon = gtk::Image::from_icon_name("emblem-ok-symbolic");
-            circulo.append(&icon);
         }
 
         let label = Label::builder().label(*nombre_dia).css_classes(["dim-label"]).build();
@@ -499,53 +426,122 @@ fn build_ui(app: &Application) {
     let window = ApplicationWindow::builder()
         .application(app)
         .title("Bosu")
+        .icon_name(APP_ID)   // ← le dice a GNOME qué ícono mostrar en el dock
         .default_width(450)
         .default_height(800)
         .content(&toolbar_view)
         .build();
 
     // Lógica para abrir Ventana de Preferencias
+    let content_box_clone = content_box.clone();
+    let config_clone = config_rc.clone();
     btn_settings.connect_clicked(glib::clone!(#[weak] window, move |_| {
-        let pref_window = PreferencesWindow::builder()
-            .transient_for(&window)
-            .modal(true)
-            .title("Configuración de Rutinas")
-            .build();
-            
-        let page = PreferencesPage::builder()
-            .title("Calendario y Datos")
-            .icon_name("calendar-alt-symbolic")
-            .build();
-            
-        let group_info = PreferencesGroup::builder()
-            .title("Archivo de Configuración")
-            .description("Toda la estructura de las rutinas y días de descanso ahora se guarda localmente en JSON para que sea 100% editable por ti y completamente privada.")
-            .build();
-            
-        let row_path = ActionRow::builder()
-            .title("Ubicación del Archivo")
-            .subtitle("~/.local/share/bosu_config.json")
-            .build();
-            
-        let btn_open = Button::builder()
-            .label("Abrir Carpeta")
-            .valign(Align::Center)
-            .build();
-            
-        btn_open.connect_clicked(|_| {
-            let path = glib::user_data_dir();
-            let file = gtk::gio::File::for_path(path);
-            if let Err(e) = gtk::gio::AppInfo::launch_default_for_uri(file.uri().as_str(), None::<&gtk::gio::AppLaunchContext>) {
-                eprintln!("Error al abrir carpeta: {}", e);
-            }
+        let box_cb = content_box_clone.clone();
+        let cfg_cb = config_clone.clone();
+        settings_editor::show_settings_window(&window, cfg_cb.clone(), move || {
+            populate_home_view(&box_cb, cfg_cb.clone());
         });
-            
-        row_path.add_suffix(&btn_open);
-        group_info.add(&row_path);
-        page.add(&group_info);
-        pref_window.add(&page);
-        pref_window.present();
     }));
 
     window.present();
+}
+
+fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) {
+    // Limpiar el contenedor
+    while let Some(child) = content_box.first_child() {
+        content_box.remove(&child);
+    }
+
+    let config = config_rc.borrow().clone();
+    let hoy_date = Local::now().date_naive();
+    let current_weekday = hoy_date.weekday().number_from_monday();
+    let es_descanso = config.dias_descanso.contains(&current_weekday);
+
+    if es_descanso {
+        let status = StatusPage::builder()
+            .icon_name("non-emergency-healthcare-symbolic")
+            .title("¡Hoy es día de descanso!")
+            .description("Tus músculos también necesitan recuperación. Nos vemos mañana.")
+            .build();
+        content_box.append(&status);
+    } else {
+        let mut check_buttons: Vec<CheckButton> = Vec::new();
+        let mut total_ejercicios = 0;
+
+        for categoria in config.rutinas {
+            let group = PreferencesGroup::builder().build();
+            group.add_css_class(&categoria.css_class);
+
+            for ej in categoria.ejercicios {
+                let check = CheckButton::builder().valign(Align::Center).build();
+                check_buttons.push(check.clone());
+                total_ejercicios += 1;
+
+                let row = ActionRow::builder()
+                    .title(&ej.nombre)
+                    .subtitle(&ej.repeticiones)
+                    .activatable_widget(&check)
+                    .build();
+                
+                row.add_prefix(&check);
+                group.add(&row);
+            }
+            content_box.append(&group);
+        }
+
+        let eval_group = PreferencesGroup::builder().title("Evaluación Post-Sesión").margin_top(12).build();
+        let scale_label = Label::builder().label("Nivel de dolor / esfuerzo").halign(Align::Start).margin_bottom(6).build();
+        let scale = Scale::with_range(Orientation::Horizontal, 1.0, 10.0, 1.0);
+        scale.set_value(5.0);
+        scale.set_draw_value(true);
+        let notes_entry = Entry::builder().placeholder_text("Ej. Me dolió el hombro derecho...").build();
+        let save_button = Button::builder().label("Guardar Sesión").css_classes(["suggested-action"]).margin_top(12).build();
+
+        save_button.connect_clicked(glib::clone!(
+            #[weak] scale, 
+            #[weak] notes_entry, 
+            #[strong] check_buttons,
+            move |btn| {
+                let mut completados = 0;
+                for cb in &check_buttons {
+                    if cb.is_active() { completados += 1; }
+                }
+
+                let registro = RegistroSesion {
+                    fecha: Local::now().format("%Y-%m-%d").to_string(),
+                    nivel_molestia: scale.value(),
+                    notas: notes_entry.text().to_string(),
+                    ejercicios_completados: completados,
+                    ejercicios_totales: total_ejercicios,
+                };
+
+                if let Ok(json) = serde_json::to_string(&registro) {
+                    let mut path = glib::user_data_dir();
+                    path.push("bosu_history.jsonl");
+                    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&path) {
+                        let _ = writeln!(file, "{}", json);
+                    }
+                    
+                    notes_entry.set_text("");
+                    scale.set_value(5.0);
+                    for cb in &check_buttons { cb.set_active(false); }
+
+                    btn.set_label("¡Guardado!");
+                    let btn_clone = btn.clone();
+                    glib::timeout_add_seconds_local(2, move || {
+                        btn_clone.set_label("Guardar Sesión");
+                        glib::ControlFlow::Break
+                    });
+                }
+            }
+        ));
+
+        let eval_box = Box::builder().orientation(Orientation::Vertical).spacing(12).margin_top(12).margin_bottom(12).margin_start(12).margin_end(12).build();
+        eval_box.append(&scale_label);
+        eval_box.append(&scale);
+        eval_box.append(&notes_entry);
+        eval_box.append(&save_button);
+        eval_group.add(&ActionRow::builder().child(&eval_box).build());
+        content_box.append(&eval_group);
+    }
 }

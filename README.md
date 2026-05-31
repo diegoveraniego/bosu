@@ -1,6 +1,10 @@
 # Bosu 
 
 <p align="center">
+  <img src="bosu_icon_temp.svg" alt="Bosu icon (provisional)" width="128" height="128" />
+</p>
+
+<p align="center">
   <em>A Kinesiological Rehabilitation Tracker built natively for the GNOME Desktop.</em>
 </p>
 
