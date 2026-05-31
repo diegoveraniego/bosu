@@ -59,13 +59,14 @@ pub fn show_settings_window<F>(
         .icon_name("document-edit-symbolic")
         .build();
 
-    let editor_container = Box::builder()
-        .orientation(Orientation::Vertical)
+    let editor_group = PreferencesGroup::builder()
+        .title("Mis Rutinas")
         .build();
 
     let temp_config = Rc::new(RefCell::new(config.borrow().clone()));
+    let widgets_tracked = Rc::new(RefCell::new(Vec::<gtk::Widget>::new()));
 
-    render_editor(&editor_container, temp_config.clone());
+    render_editor(&editor_group, temp_config.clone(), widgets_tracked.clone());
     
     let btn_save = Button::builder()
         .label("Guardar Cambios")
@@ -96,8 +97,8 @@ pub fn show_settings_window<F>(
         pref_window_clone.close();
     });
 
-    let group_editor = PreferencesGroup::builder().build();
-    group_editor.add(&ActionRow::builder().child(&editor_container).build());
+    page_editor.add(&editor_group);
+    
     let box_bottom = Box::builder().orientation(Orientation::Vertical).build();
     box_bottom.append(&btn_save);
     let pg_bottom = PreferencesGroup::builder().build();
@@ -109,11 +110,12 @@ pub fn show_settings_window<F>(
     pref_window.present();
 }
 
-fn render_editor(container: &Box, temp_config: Rc<RefCell<Configuracion>>) {
+fn render_editor(group: &PreferencesGroup, temp_config: Rc<RefCell<Configuracion>>, widgets: Rc<RefCell<Vec<gtk::Widget>>>) {
     // Limpiar el contenedor
-    while let Some(child) = container.first_child() {
-        container.remove(&child);
+    for child in widgets.borrow().iter() {
+        group.remove(child);
     }
+    widgets.borrow_mut().clear();
 
     let config_val = temp_config.borrow().clone();
 
@@ -172,10 +174,11 @@ fn render_editor(container: &Box, temp_config: Rc<RefCell<Configuracion>>) {
                 .build();
                 
             let tc_del_ej = temp_config.clone();
-            let container_clone = container.clone();
+            let group_clone = group.clone();
+            let widgets_clone = widgets.clone();
             btn_del_ej.connect_clicked(move |_| {
                 tc_del_ej.borrow_mut().rutinas[cat_idx].ejercicios.remove(ej_idx);
-                render_editor(&container_clone, tc_del_ej.clone());
+                render_editor(&group_clone, tc_del_ej.clone(), widgets_clone.clone());
             });
             
             let row_del_ej = ActionRow::builder().title("Eliminar Ejercicio").build();
@@ -194,13 +197,14 @@ fn render_editor(container: &Box, temp_config: Rc<RefCell<Configuracion>>) {
             .build();
             
         let tc_add_ej = temp_config.clone();
-        let container_clone2 = container.clone();
+        let group_clone2 = group.clone();
+        let widgets_clone2 = widgets.clone();
         btn_add_ej.connect_clicked(move |_| {
             tc_add_ej.borrow_mut().rutinas[cat_idx].ejercicios.push(Ejercicio {
                 nombre: "Nuevo Ejercicio".to_string(),
                 repeticiones: "10x3".to_string(),
             });
-            render_editor(&container_clone2, tc_add_ej.clone());
+            render_editor(&group_clone2, tc_add_ej.clone(), widgets_clone2.clone());
         });
         expander.add_row(&ActionRow::builder().child(&btn_add_ej).build());
 
@@ -214,14 +218,16 @@ fn render_editor(container: &Box, temp_config: Rc<RefCell<Configuracion>>) {
             .build();
             
         let tc_del_cat = temp_config.clone();
-        let container_clone3 = container.clone();
+        let group_clone3 = group.clone();
+        let widgets_clone3 = widgets.clone();
         btn_del_cat.connect_clicked(move |_| {
             tc_del_cat.borrow_mut().rutinas.remove(cat_idx);
-            render_editor(&container_clone3, tc_del_cat.clone());
+            render_editor(&group_clone3, tc_del_cat.clone(), widgets_clone3.clone());
         });
         expander.add_row(&ActionRow::builder().child(&btn_del_cat).build());
 
-        container.append(&expander);
+        group.add(&expander);
+        widgets.borrow_mut().push(expander.upcast::<gtk::Widget>());
     }
 
     let btn_add_cat = Button::builder()
@@ -231,7 +237,8 @@ fn render_editor(container: &Box, temp_config: Rc<RefCell<Configuracion>>) {
         .build();
         
     let tc_add_cat = temp_config.clone();
-    let container_clone4 = container.clone();
+    let group_clone4 = group.clone();
+    let widgets_clone4 = widgets.clone();
     btn_add_cat.connect_clicked(move |_| {
         // Asignar un color ciclando los disponibles
         let colores = ["group-blue", "group-green", "group-purple", "group-orange"];
@@ -242,8 +249,10 @@ fn render_editor(container: &Box, temp_config: Rc<RefCell<Configuracion>>) {
             css_class: colores[idx].to_string(),
             ejercicios: vec![],
         });
-        render_editor(&container_clone4, tc_add_cat.clone());
+        render_editor(&group_clone4, tc_add_cat.clone(), widgets_clone4.clone());
     });
     
-    container.append(&btn_add_cat);
+    let btn_row = ActionRow::builder().child(&btn_add_cat).build();
+    group.add(&btn_row);
+    widgets.borrow_mut().push(btn_row.upcast::<gtk::Widget>());
 }
