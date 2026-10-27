@@ -607,9 +607,10 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
         let mut check_buttons: Vec<CheckButton> = Vec::new();
         let mut total_ejercicios = 0;
 
-        for categoria in &rutina.secciones {
+        let category_colors = ["group-blue", "group-green", "group-purple", "group-orange"];
+        for (index, categoria) in rutina.secciones.iter().enumerate() {
             let group = PreferencesGroup::builder().title(&categoria.titulo).build();
-            group.add_css_class(&categoria.css_class);
+            group.add_css_class(category_colors[index % category_colors.len()]);
 
             for ej in &categoria.ejercicios {
                 let check = CheckButton::builder().valign(Align::Center).build();
