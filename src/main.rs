@@ -1,5 +1,5 @@
 use adw::prelude::*;
-use adw::{Application, ApplicationWindow, HeaderBar, ToolbarView, ActionRow, PreferencesGroup, ViewStack, ViewSwitcher, Banner, PreferencesWindow, PreferencesPage, StatusPage};
+use adw::{Application, ApplicationWindow, HeaderBar, ToolbarView, ActionRow, PreferencesGroup, ViewStack, ViewSwitcher, Banner, StatusPage};
 use gtk::{Box, Label, CheckButton, Scale, Entry, Button, Orientation, Align, ScrolledWindow, glib, Grid};
 use serde::{Deserialize, Serialize};
 use chrono::{Local, Duration, Datelike};
@@ -9,6 +9,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 mod settings_editor;
+mod body_map;
+mod kine;
 
 const APP_ID: &str = "org.diego.Bosu";
 
@@ -188,7 +190,7 @@ fn build_ui(app: &Application) {
     let mut config_path = glib::user_data_dir();
     config_path.push("bosu_config.json");
     
-    let config = if let Ok(data) = std::fs::read_to_string(&config_path) {
+    let mut config: Configuracion = if let Ok(data) = std::fs::read_to_string(&config_path) {
         serde_json::from_str(&data).unwrap_or_default()
     } else {
         let def = Configuracion::default();
@@ -196,6 +198,11 @@ fn build_ui(app: &Application) {
         def
     };
 
+    if kine::add_missing(&mut config) {
+        if let Ok(json) = serde_json::to_string_pretty(&config) {
+            if let Err(error) = std::fs::write(&config_path, json) { eprintln!("No se pudieron guardar las rutinas: {error}"); }
+        }
+    }
     let config_rc = Rc::new(RefCell::new(config));
 
     let mut banner_title = String::new();
@@ -490,6 +497,8 @@ fn build_ui(app: &Application) {
     view_stack.add_titled_with_icon(&hoy_wrapper, Some("hoy"), "Hoy", "view-list-symbolic");
     view_stack.add_titled_with_icon(&scrolled_progreso, Some("progreso"), "Progreso", "charge-symbolic");
 
+    view_stack.add_titled_with_icon(&body_map::build(), Some("cuerpo"), "Cuerpo", "avatar-default-symbolic");
+
     let view_switcher = ViewSwitcher::builder()
         .stack(&view_stack)
         .policy(adw::ViewSwitcherPolicy::Narrow)
@@ -598,7 +607,7 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
         let mut total_ejercicios = 0;
 
         for categoria in &rutina.secciones {
-            let group = PreferencesGroup::builder().build();
+            let group = PreferencesGroup::builder().title(&categoria.titulo).build();
             group.add_css_class(&categoria.css_class);
 
             for ej in &categoria.ejercicios {

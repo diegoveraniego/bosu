@@ -61,6 +61,7 @@ pub fn show_settings_window<F>(
                 if let Some(path) = folder.path() {
                     let _ = std::fs::copy(&src_config, path.join("bosu_config.json"));
                     let _ = std::fs::copy(&src_hist, path.join("bosu_history.jsonl"));
+                    let _ = std::fs::copy(glib::user_data_dir().join("bosu_body.json"), path.join("bosu_body.json"));
                 }
             }
         });
@@ -82,6 +83,8 @@ pub fn show_settings_window<F>(
                     let src_hist = path.join("bosu_history.jsonl");
                     if src_config.exists() { let _ = std::fs::copy(&src_config, dst_config); }
                     if src_hist.exists() { let _ = std::fs::copy(&src_hist, dst_hist); }
+                    let body = path.join("bosu_body.json");
+                    if body.exists() { let _ = std::fs::copy(body, glib::user_data_dir().join("bosu_body.json")); }
                 }
             }
         });

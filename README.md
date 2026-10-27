@@ -52,3 +52,19 @@ This project was born out of a personal need to track specific kinesiologic exer
 ## License
 
 This project is licensed under the MIT License.
+
+## Registro corporal y sesiones Kine
+
+La pestaña **Cuerpo** permite marcar frente y espalda con seis sensaciones: dolor, tensión, cansancio, irritado, trabajado y fuerte. Elige una sensación y pulsa para crear un punto; arrástralo para moverlo, pulsa sobre él para cambiar su color o usa clic derecho para eliminarlo. **Guardar registro corporal** conserva ambas vistas con fecha y hora. Selecciona registros anteriores para comparar; cada guardado crea una entrada nueva. Limpiar el mapa no borra el historial.
+
+Los mapas se almacenan en `~/.local/share/bosu_body.json` (o en `$XDG_DATA_HOME`) y se incluyen en los respaldos. El registro corporal se guarda independientemente de la sesión de ejercicios, también en días de descanso.
+
+Se agregan automáticamente **Sesión Kine · Pared y suelo** y **Sesión Kine · TRX y barra**, sin reemplazar rutinas existentes. Ambas incluyen calentamiento de 15 minutos y estiramientos al final. La primera indica la variante opcional de mantener 5 segundos, excepto en el saludo al sol. Puedes ajustar nombres, repeticiones y metas semanales en Configuración → Editor. Las metas iniciales son de un día por rutina; ajústalas a tu planificación.
+
+Para continuar el desarrollo:
+
+```bash
+cargo test --offline
+cargo build --release --offline
+./target/release/bosu
+```
