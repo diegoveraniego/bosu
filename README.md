@@ -74,3 +74,20 @@ cargo test --offline
 cargo build --release --offline
 ./target/release/bosu
 ```
+
+## Evolución con heatmap
+
+En **Cuerpo → Registrar**, cada punto puede guardar una intensidad de 0 a 10. Selecciona un punto para editar su sensación o intensidad. Puedes etiquetar el registro como general, antes de la sesión o después de la sesión. La vista de calor permite previsualizar una sensación sin cambiar los puntos.
+
+En **Cuerpo → Evolución** puedes:
+
+- Ver frente y espalda con la misma escala de color en todas las fechas.
+- Filtrar dolor, tensión, cansancio, irritación, trabajado o fuerte por separado.
+- Elegir todo el historial o los últimos 7, 30 o 90 días, y filtrar antes/después de la sesión.
+- Avanzar registro a registro o reproducir la secuencia cada 800 ms.
+- Consultar un gráfico de intensidad máxima por zona o de todo el cuerpo.
+- Exportar los registros filtrados a un GIF animado con fecha, sensación, momento y escala. La exportación se ejecuta en segundo plano y no necesita programas adicionales.
+
+**Interpretación:** una zona sin marcar significa sin datos, no dolor cero. Los puntos antiguos sin intensidad se muestran con `?`; no se les asigna un valor. El cero solo aparece si se registró explícitamente. Si una zona tiene varios puntos de la misma sensación se usa su intensidad máxima. Los huecos del gráfico representan valores sin registrar. Cada cuadro corresponde a un registro real, sin interpolar días o sensaciones. Los mapas de la silueta anterior se conservan en el historial original y quedan fuera de la animación SVG.
+
+El GIF usa un intervalo fijo entre cuadros; no representa la duración real entre sesiones. Los filtros y la reproducción no modifican el registro que estás editando.

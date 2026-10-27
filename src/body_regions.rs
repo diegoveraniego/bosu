@@ -83,6 +83,37 @@ impl Model {
                 && s.alpha[((y - top) * w + x - left) as usize] > 32
         })
     }
+    pub fn draw_heat(
+        &self,
+        cr: &cairo::Context,
+        ink: &gtk::gdk::RGBA,
+        back: bool,
+        values: &std::collections::HashMap<u32, Option<u8>>,
+        kind: usize,
+    ) {
+        self.draw(cr, ink, back, None);
+        let _ = cr.save();
+        cr.scale(WIDTH.recip(), HEIGHT.recip());
+        for shape in self.shapes.iter().filter(|s| s.region.back == back) {
+            if let Some(value) = values.get(&shape.region.id) {
+                if let Some(intensity) = value {
+                    let c = crate::body_heat::color(kind, *intensity);
+                    cr.set_source_rgb(c.0, c.1, c.2);
+                } else {
+                    cr.set_source_rgb(0.55, 0.55, 0.6);
+                }
+                let _ = cr.mask_surface(&shape.mask, shape.bounds.0 as f64, shape.bounds.1 as f64);
+                if value.is_none() {
+                    cr.set_source_rgb(0.1, 0.1, 0.15);
+                    cr.set_font_size(20.);
+                    cr.move_to(shape.center.0 * WIDTH - 5., shape.center.1 * HEIGHT + 7.);
+                    let _ = cr.show_text("?");
+                }
+            }
+        }
+        let _ = cr.restore();
+    }
+
     pub fn draw(
         &self,
         cr: &cairo::Context,

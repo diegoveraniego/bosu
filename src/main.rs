@@ -10,6 +10,9 @@ use std::cell::RefCell;
 
 mod settings_editor;
 mod body_map;
+mod body_heat;
+mod body_evolution;
+mod body_gif;
 mod body_regions;
 mod body_legacy;
 mod kine;

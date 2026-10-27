@@ -7,7 +7,7 @@ use std::{
     rc::Rc,
 };
 
-const KINDS: [&str; 6] = [
+pub(crate) const KINDS: [&str; 6] = [
     "Dolor",
     "Tensión",
     "Cansancio",
@@ -24,21 +24,25 @@ const COLORS: [(f64, f64, f64); 6] = [
     (0.2, 0.7, 0.4),
 ];
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct Point {
-    x: f64,
-    y: f64,
-    back: bool,
-    kind: usize,
+pub(crate) struct Point {
+    pub(crate) x: f64,
+    pub(crate) y: f64,
+    pub(crate) back: bool,
+    pub(crate) kind: usize,
     #[serde(default)]
-    region_id: Option<u32>,
+    pub(crate) region_id: Option<u32>,
+    #[serde(default)]
+    pub(crate) intensity: Option<u8>,
 }
 #[derive(Clone, Serialize, Deserialize)]
-struct Snapshot {
-    date: String,
-    points: Vec<Point>,
+pub(crate) struct Snapshot {
+    pub(crate) date: String,
+    pub(crate) points: Vec<Point>,
     /// Missing on old records, whose coordinates belong to the original silhouette.
     #[serde(default)]
-    map_version: u8,
+    pub(crate) map_version: u8,
+    #[serde(default)]
+    pub(crate) moment: String,
 }
 fn path() -> std::path::PathBuf {
     glib::user_data_dir().join("bosu_body.json")
@@ -87,10 +91,13 @@ fn summarize(label: &Label, points: &[Point], model: &Model, version: u8) {
                     .unwrap_or("Zona sin identificar")
             };
             format!(
-                "● {} · {} · {}",
+                "● {} · {} · {} · {}",
                 name,
                 if p.back { "espalda" } else { "frente" },
-                KINDS[p.kind.min(KINDS.len() - 1)]
+                KINDS[p.kind.min(KINDS.len() - 1)],
+                p.intensity
+                    .map(|v| format!("{}/10", v.min(10)))
+                    .unwrap_or_else(|| "intensidad sin registrar".into())
             )
         })
         .collect();
@@ -124,7 +131,7 @@ pub fn build() -> gtk::ScrolledWindow {
             .css_classes(["title-1"])
             .build(),
     );
-    root.append(&Label::builder().label("Elige una sensación y toca una zona para crear un punto. Arrastra para moverlo; toca un punto para cambiar su sensación.").wrap(true).build());
+    root.append(&Label::builder().label("Elige una sensación y toca una zona para crear un punto. Arrastra para moverlo; selecciona un punto para editar su sensación e intensidad.").wrap(true).build());
     let side = DropDown::from_strings(&["Frente", "Espalda"]);
     let kind = DropDown::from_strings(&KINDS);
     kind.set_tooltip_text(Some("Sensación para los puntos nuevos o seleccionados"));
@@ -155,6 +162,29 @@ pub fn build() -> gtk::ScrolledWindow {
     views.append(&back);
     root.append(&views);
     root.append(&kind);
+    let intensity = gtk::Scale::with_range(Orientation::Horizontal, 0., 10., 1.);
+    intensity.set_value(5.);
+    intensity.set_draw_value(true);
+    intensity.set_digits(0);
+    intensity.update_property(&[gtk::accessible::Property::Label(
+        "Intensidad de la sensación de 0 a 10",
+    )]);
+    root.append(&Label::new(Some("Intensidad · 0 a 10")));
+    root.append(&intensity);
+    let moment = DropDown::from_strings(&[
+        "Registro general",
+        "Antes de la sesión",
+        "Después de la sesión",
+    ]);
+    root.append(&moment);
+    let heatmap = gtk::CheckButton::with_label("Ver calor por intensidad de la sensación elegida");
+    root.append(&heatmap);
+    let heat_filter = DropDown::from_strings(&KINDS);
+    heat_filter.set_tooltip_text(Some(
+        "Sensación que se muestra en el heatmap; no modifica tus puntos",
+    ));
+    heat_filter.set_visible(false);
+    root.append(&heat_filter);
     root.append(&Label::builder().use_markup(true).wrap(true).label("<span foreground='#e63333'>● Dolor</span>   <span foreground='#f2a619'>● Tensión</span>   <span foreground='#8059d9'>● Cansancio</span>\n<span foreground='#e64d99'>● Irritado</span>   <span foreground='#2699e6'>● Trabajado</span>   <span foreground='#33b366'>● Fuerte</span>").build());
     let (initial, load_error) = match std::fs::read(path()) {
         Ok(bytes) => match serde_json::from_slice::<Vec<Snapshot>>(&bytes) {
@@ -180,6 +210,14 @@ pub fn build() -> gtk::ScrolledWindow {
     let version = Rc::new(Cell::new(1u8));
     let selected = Rc::new(Cell::new(None::<usize>));
     let selected_point = Rc::new(Cell::new(None::<usize>));
+    let updating_controls = Rc::new(Cell::new(false));
+    if let Some(snapshot) = &latest {
+        moment.set_selected(match snapshot.moment.as_str() {
+            "before" => 1,
+            "after" => 2,
+            _ => 0,
+        });
+    }
     let hover = Rc::new(Cell::new(None::<usize>));
     let zone = Label::builder()
         .wrap(true)
@@ -222,10 +260,28 @@ pub fn build() -> gtk::ScrolledWindow {
         hover,
         #[weak]
         side,
+        #[weak]
+        heat_filter,
+        #[weak]
+        heatmap,
         move |widget, cr, w, h| {
             cr.scale(w as f64, h as f64);
             if version.get() == 0 {
                 crate::body_legacy::draw(widget, cr, side.selected() == 1);
+            } else if heatmap.is_active() {
+                let snapshot = Snapshot {
+                    date: String::new(),
+                    points: points.borrow().clone(),
+                    map_version: version.get(),
+                    moment: String::new(),
+                };
+                model.draw_heat(
+                    cr,
+                    &widget.color(),
+                    side.selected() == 1,
+                    &crate::body_heat::values(&snapshot, heat_filter.selected() as usize),
+                    heat_filter.selected() as usize,
+                );
             } else {
                 model.draw(
                     cr,
@@ -234,12 +290,17 @@ pub fn build() -> gtk::ScrolledWindow {
                     hover.get().or(selected.get()),
                 );
             }
-            for p in points
-                .borrow()
-                .iter()
-                .filter(|p| p.back == (side.selected() == 1))
-            {
-                let c = COLORS[p.kind.min(COLORS.len() - 1)];
+            for p in points.borrow().iter().filter(|p| {
+                p.back == (side.selected() == 1)
+                    && (!heatmap.is_active() || p.kind == heat_filter.selected() as usize)
+            }) {
+                let c = if heatmap.is_active() {
+                    p.intensity
+                        .map(|n| crate::body_heat::color(p.kind, n))
+                        .unwrap_or((0.55, 0.55, 0.6))
+                } else {
+                    COLORS[p.kind.min(COLORS.len() - 1)]
+                };
                 cr.set_source_rgb(c.0, c.1, c.2);
                 let _ = cr.save();
                 cr.translate(p.x, p.y);
@@ -253,6 +314,21 @@ pub fn build() -> gtk::ScrolledWindow {
             }
         }
     ));
+    heatmap.connect_toggled(glib::clone!(
+        #[weak]
+        area,
+        #[weak]
+        heat_filter,
+        move |button| {
+            heat_filter.set_visible(button.is_active());
+            area.queue_draw();
+        }
+    ));
+    heat_filter.connect_selected_notify(glib::clone!(
+        #[weak]
+        area,
+        move |_| area.queue_draw()
+    ));
     side.connect_selected_notify(glib::clone!(
         #[weak]
         area,
@@ -265,6 +341,8 @@ pub fn build() -> gtk::ScrolledWindow {
         #[strong]
         selected,
         #[strong]
+        selected_point,
+        #[strong]
         hover,
         #[strong]
         model,
@@ -276,6 +354,7 @@ pub fn build() -> gtk::ScrolledWindow {
             }
             hover.set(None);
             selected.set(None);
+            selected_point.set(None);
             describe(&zone, &model, None);
             area.queue_draw();
         }
@@ -314,6 +393,64 @@ pub fn build() -> gtk::ScrolledWindow {
         .selectable(true)
         .build();
     summarize(&summary, &points.borrow(), &model, version.get());
+    intensity.connect_value_changed(glib::clone!(
+        #[strong]
+        points,
+        #[strong]
+        selected_point,
+        #[strong]
+        updating_controls,
+        #[strong]
+        model,
+        #[strong]
+        version,
+        #[weak]
+        summary,
+        #[weak]
+        area,
+        move |scale| {
+            if updating_controls.get() {
+                return;
+            }
+            {
+                let mut ps = points.borrow_mut();
+                if let Some(p) = selected_point.get().and_then(|i| ps.get_mut(i)) {
+                    p.intensity = Some(scale.value() as u8);
+                }
+            }
+            summarize(&summary, &points.borrow(), &model, version.get());
+            area.queue_draw();
+        }
+    ));
+    kind.connect_selected_notify(glib::clone!(
+        #[strong]
+        points,
+        #[strong]
+        selected_point,
+        #[strong]
+        updating_controls,
+        #[strong]
+        model,
+        #[strong]
+        version,
+        #[weak]
+        summary,
+        #[weak]
+        area,
+        move |dd| {
+            if updating_controls.get() {
+                return;
+            }
+            {
+                let mut ps = points.borrow_mut();
+                if let Some(p) = selected_point.get().and_then(|i| ps.get_mut(i)) {
+                    p.kind = dd.selected() as usize;
+                }
+            }
+            summarize(&summary, &points.borrow(), &model, version.get());
+            area.queue_draw();
+        }
+    ));
     let motion = gtk::EventControllerMotion::new();
     motion.connect_motion(glib::clone!(
         #[strong]
@@ -387,6 +524,10 @@ pub fn build() -> gtk::ScrolledWindow {
         zone,
         #[weak]
         summary,
+        #[weak]
+        intensity,
+        #[strong]
+        updating_controls,
         move |_, x, y| {
             active.set(None);
             let x = x / area.width() as f64;
@@ -403,6 +544,7 @@ pub fn build() -> gtk::ScrolledWindow {
                 Some(i) => i,
                 None => {
                     if version.get() == 1 && region.is_none() {
+                        selected_point.set(None);
                         return;
                     }
                     ps.push(Point {
@@ -410,12 +552,14 @@ pub fn build() -> gtk::ScrolledWindow {
                         y,
                         back,
                         kind: kind.selected() as usize,
+                        intensity: Some(intensity.value() as u8),
                         region_id: region.map(|i| model.shapes[i].region.id),
                     });
                     ps.len() - 1
                 }
             };
-            ps[index].kind = kind.selected() as usize;
+            let point_kind = ps[index].kind;
+            let point_intensity = ps[index].intensity;
             let region = ps[index]
                 .region_id
                 .and_then(|id| model.shapes.iter().position(|s| s.region.id == id));
@@ -424,6 +568,11 @@ pub fn build() -> gtk::ScrolledWindow {
             describe(&zone, &model, region);
             active.set(Some((index, ps[index].x, ps[index].y)));
             summarize(&summary, &ps, &model, version.get());
+            drop(ps);
+            updating_controls.set(true);
+            kind.set_selected(point_kind.min(KINDS.len() - 1) as u32);
+            intensity.set_value(f64::from(point_intensity.unwrap_or(5)));
+            updating_controls.set(false);
             area.queue_draw();
         }
     ));
@@ -508,11 +657,42 @@ pub fn build() -> gtk::ScrolledWindow {
         status.set_text(&format!("No se pudo leer el historial corporal: {e}"));
     }
     let mark = Button::with_label("Marcar zona seleccionada");
-    mark.connect_clicked(glib::clone!(#[strong] points,#[strong] model,#[strong] version,#[strong] selected,#[strong] selected_point,#[weak] kind,#[weak] area,#[weak] summary,#[weak] status,move|_|{
+    mark.connect_clicked(glib::clone!(#[strong] points,#[strong] model,#[strong] version,#[strong] selected,#[strong] selected_point,#[weak] kind,#[weak] intensity,#[weak] area,#[weak] summary,#[weak] status,move|_|{
         if version.get()==0{status.set_text("Este registro usa el mapa anterior. Inicia un nuevo registro para usar las zonas SVG.");return;}
-        if let Some(i)=selected.get(){let shape=&model.shapes[i];let mut ps=points.borrow_mut();ps.push(Point{x:shape.center.0,y:shape.center.1,back:shape.region.back,kind:kind.selected() as usize,region_id:Some(shape.region.id)});selected_point.set(Some(ps.len()-1));summarize(&summary,&ps,&model,version.get());area.queue_draw();}else{status.set_text("Primero selecciona una zona por su nombre o en el dibujo.");}
+        if let Some(i)=selected.get(){let shape=&model.shapes[i];let mut ps=points.borrow_mut();ps.push(Point{x:shape.center.0,y:shape.center.1,back:shape.region.back,kind:kind.selected() as usize,intensity:Some(intensity.value() as u8),region_id:Some(shape.region.id)});selected_point.set(Some(ps.len()-1));summarize(&summary,&ps,&model,version.get());area.queue_draw();}else{status.set_text("Primero selecciona una zona por su nombre o en el dibujo.");}
     }));
     root.append(&mark);
+    let apply = Button::with_label("Aplicar sensación e intensidad al punto seleccionado");
+    apply.connect_clicked(glib::clone!(
+        #[strong]
+        points,
+        #[strong]
+        selected_point,
+        #[strong]
+        model,
+        #[strong]
+        version,
+        #[weak]
+        kind,
+        #[weak]
+        intensity,
+        #[weak]
+        summary,
+        #[weak]
+        area,
+        move |_| {
+            {
+                let mut ps = points.borrow_mut();
+                if let Some(p) = selected_point.get().and_then(|i| ps.get_mut(i)) {
+                    p.kind = kind.selected() as usize;
+                    p.intensity = Some(intensity.value() as u8);
+                }
+            }
+            summarize(&summary, &points.borrow(), &model, version.get());
+            area.queue_draw();
+        }
+    ));
+    root.append(&apply);
     let delete = Button::with_label("Eliminar punto seleccionado");
     delete.connect_clicked(glib::clone!(
         #[strong]
@@ -594,12 +774,14 @@ pub fn build() -> gtk::ScrolledWindow {
             regions.set_selected(0);
         }
     ));
-    selector.connect_selected_notify(glib::clone!(#[strong] history,#[strong] points,#[strong] version,#[strong] selected,#[strong] selected_point,#[strong] model,#[weak] area,#[weak] summary,#[weak] zone,#[weak] status,move|dd|{
+    selector.connect_selected_notify(glib::clone!(#[strong] history,#[strong] points,#[strong] version,#[strong] selected,#[strong] selected_point,#[strong] model,#[weak] area,#[weak] summary,#[weak] zone,#[weak] status,#[weak] moment,move|dd|{
         if let Some(s)=history.borrow().get(dd.selected() as usize){
-            *points.borrow_mut()=s.points.clone();version.set(s.map_version);selected.set(None);selected_point.set(None);area.set_content_height(if s.map_version==0{430}else{600});describe(&zone,&model,None);summarize(&summary,&points.borrow(),&model,version.get());
+            *points.borrow_mut()=s.points.clone();version.set(s.map_version);moment.set_selected(match s.moment.as_str(){"before"=>1,"after"=>2,_=>0});selected.set(None);selected_point.set(None);area.set_content_height(if s.map_version==0{430}else{600});describe(&zone,&model,None);summarize(&summary,&points.borrow(),&model,version.get());
             status.set_text(if s.map_version==0{"Registro anterior: se muestra la silueta original para conservar la ubicación de tus puntos."}else{"Registro SVG cargado. Guardar crea una entrada nueva."});area.queue_draw();
         }
     }));
+    let evolution = crate::body_evolution::build(history.clone(), model.clone());
+    let refresh_evolution = evolution.refresh.clone();
     let save = Button::builder()
         .label("Guardar registro corporal")
         .css_classes(["suggested-action"])
@@ -614,6 +796,10 @@ pub fn build() -> gtk::ScrolledWindow {
         version,
         #[strong]
         dates,
+        #[strong]
+        refresh_evolution,
+        #[weak]
+        moment,
         #[weak]
         selector,
         #[weak]
@@ -623,6 +809,12 @@ pub fn build() -> gtk::ScrolledWindow {
                 date: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
                 points: points.borrow().clone(),
                 map_version: version.get(),
+                moment: match moment.selected() {
+                    1 => "before",
+                    2 => "after",
+                    _ => "general",
+                }
+                .into(),
             };
             let mut next = history.borrow().clone();
             next.push(snapshot.clone());
@@ -633,6 +825,7 @@ pub fn build() -> gtk::ScrolledWindow {
                     let index = history.borrow().len() as u32 - 1;
                     selector.set_selected(index);
                     status.set_text("Registro guardado. Elige una fecha para comparar tus mapas.");
+                    refresh_evolution();
                 }
                 Err(e) => status.set_text(&format!("No se pudo guardar: {e}")),
             }
@@ -644,8 +837,22 @@ pub fn build() -> gtk::ScrolledWindow {
         "Historial corporal · selecciona un registro para verlo",
     )));
     root.append(&selector);
+    let stack = gtk::Stack::new();
+    stack.set_vhomogeneous(false);
+    stack.add_titled(&root, Some("registrar"), "Registrar");
+    stack.add_titled(&evolution.widget, Some("evolucion"), "Evolución");
+    let switcher = gtk::StackSwitcher::builder()
+        .stack(&stack)
+        .halign(gtk::Align::Center)
+        .build();
+    let content = Box::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(12)
+        .build();
+    content.append(&switcher);
+    content.append(&stack);
     gtk::ScrolledWindow::builder()
-        .child(&root)
+        .child(&content)
         .vexpand(true)
         .build()
 }
@@ -660,6 +867,7 @@ mod tests {
         .unwrap();
         assert_eq!(s.map_version, 0);
         assert_eq!(s.points[0].region_id, None);
+        assert_eq!(s.points[0].intensity, None);
         let p = &s.points[0];
         assert_eq!(hit(&s.points, p.x, p.y, false, 270., 430.), None);
         assert_eq!(hit(&s.points, p.x, p.y, true, 270., 430.), Some(0));
@@ -669,18 +877,22 @@ mod tests {
         let s = Snapshot {
             date: "2026-10-27".into(),
             map_version: 1,
+            moment: "before".into(),
             points: vec![Point {
                 x: 0.5,
                 y: 0.3,
                 back: true,
                 kind: 5,
                 region_id: Some(39),
+                intensity: Some(6),
             }],
         };
         let copy: Snapshot = serde_json::from_str(&serde_json::to_string(&s).unwrap()).unwrap();
         assert_eq!(copy.map_version, 1);
         assert_eq!(copy.points[0].region_id, Some(39));
         assert_eq!(copy.points[0].kind, 5);
+        assert_eq!(copy.points[0].intensity, Some(6));
+        assert_eq!(copy.moment, "before");
         assert!(copy.points[0].back);
     }
 }
