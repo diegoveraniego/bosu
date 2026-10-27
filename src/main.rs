@@ -180,7 +180,7 @@ fn build_ui(app: &Application) {
 
     if let Ok(file) = File::open(&history_path) {
         let reader = BufReader::new(file);
-        for line in reader.lines().flatten() {
+        for line in reader.lines().map_while(Result::ok) {
             if let Ok(registro) = serde_json::from_str::<RegistroSesion>(&line) {
                 history.push(registro);
             }
@@ -198,10 +198,10 @@ fn build_ui(app: &Application) {
         def
     };
 
-    if kine::add_missing(&mut config) {
-        if let Ok(json) = serde_json::to_string_pretty(&config) {
-            if let Err(error) = std::fs::write(&config_path, json) { eprintln!("No se pudieron guardar las rutinas: {error}"); }
-        }
+    if kine::add_missing(&mut config)
+        && let Ok(json) = serde_json::to_string_pretty(&config)
+        && let Err(error) = std::fs::write(&config_path, json) {
+        eprintln!("No se pudieron guardar las rutinas: {error}");
     }
     let config_rc = Rc::new(RefCell::new(config));
 
@@ -347,7 +347,7 @@ fn build_ui(app: &Application) {
 
         let val_box = Box::builder().orientation(Orientation::Horizontal).spacing(6).build();
         let val_label = Label::builder()
-            .label(&format!("<span size='xx-large' weight='bold'>{}</span>", valor))
+            .label(format!("<span size='xx-large' weight='bold'>{}</span>", valor))
             .use_markup(true)
             .halign(Align::Start)
             .build();
@@ -562,10 +562,9 @@ fn populate_home_view(content_box: &Box, config_rc: Rc<RefCell<Configuracion>>) 
         .build();
 
     let mut selected_idx = 0;
-    if let Some(ref sel_id) = config.ultima_rutina_seleccionada {
-        if let Some(pos) = config.rutinas.iter().position(|r| r.id == *sel_id) {
-            selected_idx = (pos + 1) as u32;
-        }
+    if let Some(ref sel_id) = config.ultima_rutina_seleccionada
+        && let Some(pos) = config.rutinas.iter().position(|r| r.id == *sel_id) {
+        selected_idx = (pos + 1) as u32;
     }
     dropdown.set_selected(selected_idx);
 

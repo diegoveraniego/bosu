@@ -68,7 +68,36 @@ pub fn build() -> gtk::ScrolledWindow {
     root.append(&Label::builder().label("Elige una sensación y toca el cuerpo para crear un punto. Arrastra para moverlo; toca un punto para cambiar su color. Clic derecho para eliminar.").wrap(true).build());
     let side = DropDown::from_strings(&["Frente", "Espalda"]);
     let kind = DropDown::from_strings(&KINDS);
-    root.append(&side);
+    let views = Box::builder()
+        .orientation(Orientation::Horizontal)
+        .halign(gtk::Align::Center)
+        .css_classes(["linked"])
+        .build();
+    let front = gtk::ToggleButton::with_label("Frente");
+    let back = gtk::ToggleButton::with_label("Espalda");
+    back.set_group(Some(&front));
+    front.set_active(true);
+    front.connect_toggled(glib::clone!(
+        #[strong]
+        side,
+        move |button| {
+            if button.is_active() {
+                side.set_selected(0);
+            }
+        }
+    ));
+    back.connect_toggled(glib::clone!(
+        #[strong]
+        side,
+        move |button| {
+            if button.is_active() {
+                side.set_selected(1);
+            }
+        }
+    ));
+    views.append(&front);
+    views.append(&back);
+    root.append(&views);
     root.append(&kind);
     let legend = Label::builder().use_markup(true).wrap(true).label("<span foreground='#e63333'>● Dolor</span>   <span foreground='#f2a619'>● Tensión</span>   <span foreground='#8059d9'>● Cansancio</span>\n<span foreground='#e64d99'>● Irritado</span>   <span foreground='#2699e6'>● Trabajado</span>   <span foreground='#33b366'>● Fuerte</span>").build();
     root.append(&legend);
@@ -91,7 +120,7 @@ pub fn build() -> gtk::ScrolledWindow {
     let area = DrawingArea::builder()
         .content_width(300)
         .content_height(430)
-        .hexpand(true)
+        .halign(gtk::Align::Center)
         .tooltip_text("Mapa corporal: frente y espalda se guardan juntos")
         .build();
     area.update_property(&[gtk::accessible::Property::Label(
@@ -102,9 +131,15 @@ pub fn build() -> gtk::ScrolledWindow {
         points,
         #[weak]
         side,
-        move |_, cr, w, h| {
+        move |widget, cr, w, h| {
             cr.scale(w as f64, h as f64);
-            cr.set_source_rgb(0.65, 0.7, 0.74);
+            let ink = widget.color();
+            cr.set_source_rgba(
+                ink.red() as f64,
+                ink.green() as f64,
+                ink.blue() as f64,
+                0.13,
+            );
             cr.save().unwrap();
             cr.translate(0.5, 0.10);
             cr.scale(0.065, 0.06);
@@ -146,11 +181,29 @@ pub fn build() -> gtk::ScrolledWindow {
             }
             cr.close_path();
             let _ = cr.fill();
-            cr.set_source_rgba(0.2, 0.3, 0.4, 0.4);
+            cr.set_source_rgba(ink.red() as f64, ink.green() as f64, ink.blue() as f64, 0.4);
             cr.set_line_width(0.003);
             cr.move_to(0.5, 0.23);
             cr.line_to(0.5, 0.49);
             let _ = cr.stroke();
+            // Original anatomical guides: scapulae on the back, chest on the front.
+            for mirror in [false, true] {
+                let x = |value: f64| if mirror { 1.0 - value } else { value };
+                cr.move_to(x(0.44), 0.24);
+                if side.selected() == 1 {
+                    cr.curve_to(x(0.40), 0.27, x(0.43), 0.34, x(0.47), 0.37);
+                    cr.line_to(x(0.48), 0.28);
+                } else {
+                    cr.curve_to(x(0.42), 0.28, x(0.43), 0.32, x(0.48), 0.32);
+                }
+                let _ = cr.stroke();
+                cr.move_to(x(0.43), 0.51);
+                cr.curve_to(x(0.45), 0.54, x(0.47), 0.54, x(0.49), 0.55);
+                let _ = cr.stroke();
+                cr.move_to(x(0.43), 0.74);
+                cr.line_to(x(0.47), 0.74);
+                let _ = cr.stroke();
+            }
             for p in points
                 .borrow()
                 .iter()
@@ -215,11 +268,11 @@ pub fn build() -> gtk::ScrolledWindow {
         #[weak]
         area,
         move |_, dx, dy| {
-            if let Some((index, x, y)) = *active.borrow() {
-                if let Some(p) = points.borrow_mut().get_mut(index) {
-                    p.x = (x + dx / area.width() as f64).clamp(0., 1.);
-                    p.y = (y + dy / area.height() as f64).clamp(0., 1.);
-                }
+            if let Some((index, x, y)) = *active.borrow()
+                && let Some(p) = points.borrow_mut().get_mut(index)
+            {
+                p.x = (x + dx / area.width() as f64).clamp(0., 1.);
+                p.y = (y + dy / area.height() as f64).clamp(0., 1.);
             }
             area.queue_draw();
         }

@@ -187,7 +187,7 @@ fn render_history(group: &PreferencesGroup, hist_rc: Rc<RefCell<Vec<RegistroSesi
     for (idx, sesion) in hist_rc.borrow().iter().enumerate() {
         let row = ActionRow::builder()
             .title(&sesion.fecha)
-            .subtitle(&format!("Ejercicios: {}/{} | Esfuerzo: {}", sesion.ejercicios_completados, sesion.ejercicios_totales, sesion.nivel_molestia))
+            .subtitle(format!("Ejercicios: {}/{} | Esfuerzo: {}", sesion.ejercicios_completados, sesion.ejercicios_totales, sesion.nivel_molestia))
             .build();
             
         let btn_del = Button::builder().icon_name("user-trash-symbolic").css_classes(["destructive-action"]).valign(Align::Center).build();
@@ -277,7 +277,7 @@ fn render_editor(page: &PreferencesPage, temp_config: Rc<RefCell<Configuracion>>
 
             for (ej_idx, ej) in cat.ejercicios.iter().enumerate() {
                 let ej_group = PreferencesGroup::builder()
-                    .title(&format!("Ejercicio {}", ej_idx + 1))
+                    .title(format!("Ejercicio {}", ej_idx + 1))
                     .margin_start(12)
                     .margin_end(12)
                     .margin_top(6)
