@@ -1,0 +1,1316 @@
+[
+  {
+    "back": false,
+    "key": "pecD",
+    "id": 0,
+    "name": "Pectoral derecho",
+    "description": "Parte anterior del pecho, sobre los músculos pectorales. Lado derecho de tu cuerpo.",
+    "bounds": [
+      110,
+      148,
+      77,
+      86
+    ],
+    "center": [
+      0.4002659574468085,
+      0.22869147659063627
+    ],
+    "offset": 0
+  },
+  {
+    "back": false,
+    "key": "cotD",
+    "id": 1,
+    "name": "Costilla derecha",
+    "description": "Zona lateral de las costillas, debajo del pectoral. Lado derecho de tu cuerpo.",
+    "bounds": [
+      115,
+      216,
+      39,
+      78
+    ],
+    "center": [
+      0.363031914893617,
+      0.30912364945978393
+    ],
+    "offset": 6622
+  },
+  {
+    "back": false,
+    "key": "epD",
+    "id": 2,
+    "name": "Hombro derecho · vista frontal",
+    "description": "Región del hombro, en la unión del brazo con el tronco. Lado derecho de tu cuerpo.",
+    "bounds": [
+      77,
+      143,
+      67,
+      59
+    ],
+    "center": [
+      0.2726063829787234,
+      0.2034813925570228
+    ],
+    "offset": 9664
+  },
+  {
+    "back": false,
+    "key": "coudD",
+    "id": 3,
+    "name": "Codo derecho · vista frontal",
+    "description": "Parte anterior de la articulación del codo. Lado derecho de tu cuerpo.",
+    "bounds": [
+      66,
+      268,
+      40,
+      36
+    ],
+    "center": [
+      0.2300531914893617,
+      0.34513805522208885
+    ],
+    "offset": 13617
+  },
+  {
+    "back": false,
+    "key": "oblD",
+    "id": 4,
+    "name": "Oblicuos derechos",
+    "description": "Costado del abdomen, sobre los músculos oblicuos. Lado derecho de tu cuerpo.",
+    "bounds": [
+      128,
+      293,
+      33,
+      88
+    ],
+    "center": [
+      0.386968085106383,
+      0.40036014405762305
+    ],
+    "offset": 15057
+  },
+  {
+    "back": false,
+    "key": "avbD",
+    "id": 5,
+    "name": "Antebrazo derecho · vista frontal (flexores)",
+    "description": "Región entre el codo y la muñeca, sobre los flexores. Lado derecho de tu cuerpo.",
+    "bounds": [
+      48,
+      285,
+      57,
+      95
+    ],
+    "center": [
+      0.1981382978723404,
+      0.40036014405762305
+    ],
+    "offset": 17961
+  },
+  {
+    "back": false,
+    "key": "poiD",
+    "id": 6,
+    "name": "Muñeca derecha · vista frontal",
+    "description": "Articulación entre el antebrazo y la mano. Lado derecho de tu cuerpo.",
+    "bounds": [
+      39,
+      374,
+      38,
+      33
+    ],
+    "center": [
+      0.1529255319148936,
+      0.4699879951980792
+    ],
+    "offset": 23376
+  },
+  {
+    "back": false,
+    "key": "genD",
+    "id": 7,
+    "name": "Rodilla derecha · vista frontal",
+    "description": "Región de la articulación de la rodilla. Lado derecho de tu cuerpo.",
+    "bounds": [
+      128,
+      577,
+      57,
+      57
+    ],
+    "center": [
+      0.41888297872340424,
+      0.726890756302521
+    ],
+    "offset": 24630
+  },
+  {
+    "back": false,
+    "key": "tibD",
+    "id": 8,
+    "name": "Espinilla derecha",
+    "description": "Parte anterior de la pierna, a lo largo de la tibia. Lado derecho de tu cuerpo.",
+    "bounds": [
+      133,
+      629,
+      46,
+      128
+    ],
+    "center": [
+      0.4162234042553192,
+      0.826530612244898
+    ],
+    "offset": 27879
+  },
+  {
+    "back": false,
+    "key": "abdD",
+    "id": 9,
+    "name": "Abdominales derechos",
+    "description": "Zona anterior del abdomen. Lado derecho de tu cuerpo.",
+    "bounds": [
+      154,
+      228,
+      37,
+      179
+    ],
+    "center": [
+      0.46143617021276595,
+      0.37034813925570226
+    ],
+    "offset": 33767
+  },
+  {
+    "back": false,
+    "key": "couD",
+    "id": 10,
+    "name": "Cuello (Der.)",
+    "description": "Región lateral del cuello. Lado derecho de tu cuerpo.",
+    "bounds": [
+      159,
+      95,
+      28,
+      52
+    ],
+    "center": [
+      0.46143617021276595,
+      0.14945978391356543
+    ],
+    "offset": 40390
+  },
+  {
+    "back": false,
+    "key": "quadD",
+    "id": 11,
+    "name": "Cuádriceps derecho",
+    "description": "Parte anterior del muslo, sobre el cuádriceps. Lado derecho de tu cuerpo.",
+    "bounds": [
+      118,
+      413,
+      63,
+      169
+    ],
+    "center": [
+      0.3816489361702128,
+      0.6164465786314526
+    ],
+    "offset": 41846
+  },
+  {
+    "back": false,
+    "key": "trapD",
+    "id": 12,
+    "name": "Trapecio derecho",
+    "description": "Parte superior de la espalda y base del cuello, sobre el trapecio. Lado derecho de tu cuerpo.",
+    "bounds": [
+      119,
+      114,
+      43,
+      33
+    ],
+    "center": [
+      0.3896276595744681,
+      0.16146458583433373
+    ],
+    "offset": 52493
+  },
+  {
+    "back": false,
+    "key": "cheD",
+    "id": 13,
+    "name": "Tobillo derecho · vista frontal",
+    "description": "Articulación entre la pierna y el pie. Lado derecho de tu cuerpo.",
+    "bounds": [
+      148,
+      755,
+      31,
+      38
+    ],
+    "center": [
+      0.4295212765957447,
+      0.924969987995198
+    ],
+    "offset": 53912
+  },
+  {
+    "back": false,
+    "key": "pieD",
+    "id": 14,
+    "name": "Pie derecho",
+    "description": "Región del pie. Lado derecho de tu cuerpo.",
+    "bounds": [
+      135,
+      781,
+      44,
+      52
+    ],
+    "center": [
+      0.42686170212765956,
+      0.9729891956782714
+    ],
+    "offset": 55090
+  },
+  {
+    "back": false,
+    "key": "addD",
+    "id": 15,
+    "name": "Aductor derecho",
+    "description": "Cara interna del muslo, sobre los aductores. Lado derecho de tu cuerpo.",
+    "bounds": [
+      148,
+      443,
+      36,
+      116
+    ],
+    "center": [
+      0.45345744680851063,
+      0.5840336134453782
+    ],
+    "offset": 57378
+  },
+  {
+    "back": false,
+    "key": "hanD",
+    "id": 16,
+    "name": "Cadera derecha",
+    "description": "Zona lateral de la pelvis, a la altura de la cadera. Lado derecho de tu cuerpo.",
+    "bounds": [
+      120,
+      352,
+      63,
+      100
+    ],
+    "center": [
+      0.3896276595744681,
+      0.49039615846338536
+    ],
+    "offset": 61554
+  },
+  {
+    "back": false,
+    "key": "biD",
+    "id": 17,
+    "name": "Bíceps derecho",
+    "description": "Parte anterior del brazo, sobre el bíceps. Lado derecho de tu cuerpo.",
+    "bounds": [
+      69,
+      191,
+      43,
+      93
+    ],
+    "center": [
+      0.24601063829787234,
+      0.2887154861944778
+    ],
+    "offset": 67854
+  },
+  {
+    "back": false,
+    "key": "mainD",
+    "id": 18,
+    "name": "Mano derecha · vista frontal (superficie palmar)",
+    "description": "Región de la mano · palma. Lado derecho de tu cuerpo.",
+    "bounds": [
+      0,
+      403,
+      64,
+      74
+    ],
+    "center": [
+      0.09973404255319149,
+      0.5240096038415366
+    ],
+    "offset": 71853
+  },
+  {
+    "back": false,
+    "key": "tete",
+    "id": 19,
+    "name": "Cabeza · vista frontal",
+    "description": "Región de la cabeza. ",
+    "bounds": [
+      144,
+      0,
+      88,
+      108
+    ],
+    "center": [
+      0.49867021276595747,
+      0.06422569027611044
+    ],
+    "offset": 76589
+  },
+  {
+    "back": false,
+    "key": "pecG",
+    "id": 20,
+    "name": "Pectoral izquierdo",
+    "description": "Parte anterior del pecho, sobre los músculos pectorales. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      189,
+      148,
+      77,
+      86
+    ],
+    "center": [
+      0.5997340425531915,
+      0.22869147659063627
+    ],
+    "offset": 86093
+  },
+  {
+    "back": false,
+    "key": "cotG",
+    "id": 21,
+    "name": "Costilla izquierda",
+    "description": "Zona lateral de las costillas, debajo del pectoral. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      222,
+      216,
+      39,
+      78
+    ],
+    "center": [
+      0.636968085106383,
+      0.30912364945978393
+    ],
+    "offset": 92715
+  },
+  {
+    "back": false,
+    "key": "epG",
+    "id": 22,
+    "name": "Hombro izquierdo · vista frontal",
+    "description": "Región del hombro, en la unión del brazo con el tronco. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      232,
+      143,
+      67,
+      59
+    ],
+    "center": [
+      0.7273936170212766,
+      0.2034813925570228
+    ],
+    "offset": 95757
+  },
+  {
+    "back": false,
+    "key": "coudG",
+    "id": 23,
+    "name": "Codo izquierdo · vista frontal",
+    "description": "Parte anterior de la articulación del codo. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      270,
+      268,
+      40,
+      36
+    ],
+    "center": [
+      0.7699468085106383,
+      0.34513805522208885
+    ],
+    "offset": 99710
+  },
+  {
+    "back": false,
+    "key": "oblG",
+    "id": 24,
+    "name": "Oblicuos izquierdos",
+    "description": "Costado del abdomen, sobre los músculos oblicuos. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      215,
+      293,
+      33,
+      88
+    ],
+    "center": [
+      0.613031914893617,
+      0.40036014405762305
+    ],
+    "offset": 101150
+  },
+  {
+    "back": false,
+    "key": "avbG",
+    "id": 25,
+    "name": "Antebrazo izquierdo · vista frontal (flexores)",
+    "description": "Región entre el codo y la muñeca, sobre los flexores. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      271,
+      285,
+      57,
+      95
+    ],
+    "center": [
+      0.8018617021276596,
+      0.40036014405762305
+    ],
+    "offset": 104054
+  },
+  {
+    "back": false,
+    "key": "poiG",
+    "id": 26,
+    "name": "Muñeca izquierda · vista frontal",
+    "description": "Articulación entre el antebrazo y la mano. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      299,
+      374,
+      38,
+      33
+    ],
+    "center": [
+      0.8470744680851063,
+      0.4699879951980792
+    ],
+    "offset": 109469
+  },
+  {
+    "back": false,
+    "key": "genG",
+    "id": 27,
+    "name": "Rodilla izquierda · vista frontal",
+    "description": "Región de la articulación de la rodilla. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      191,
+      577,
+      57,
+      57
+    ],
+    "center": [
+      0.5811170212765957,
+      0.726890756302521
+    ],
+    "offset": 110723
+  },
+  {
+    "back": false,
+    "key": "tibG",
+    "id": 28,
+    "name": "Espinilla izquierda",
+    "description": "Parte anterior de la pierna, a lo largo de la tibia. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      197,
+      629,
+      47,
+      128
+    ],
+    "center": [
+      0.5837765957446809,
+      0.826530612244898
+    ],
+    "offset": 113972
+  },
+  {
+    "back": false,
+    "key": "abdG",
+    "id": 29,
+    "name": "Abdominales izquierdos",
+    "description": "Zona anterior del abdomen. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      185,
+      228,
+      37,
+      179
+    ],
+    "center": [
+      0.538563829787234,
+      0.37034813925570226
+    ],
+    "offset": 119988
+  },
+  {
+    "back": false,
+    "key": "couG",
+    "id": 30,
+    "name": "Cuello (Izq.)",
+    "description": "Región lateral del cuello. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      189,
+      95,
+      28,
+      52
+    ],
+    "center": [
+      0.538563829787234,
+      0.14945978391356543
+    ],
+    "offset": 126611
+  },
+  {
+    "back": false,
+    "key": "quadG",
+    "id": 31,
+    "name": "Cuádriceps izquierdo",
+    "description": "Parte anterior del muslo, sobre el cuádriceps. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      195,
+      413,
+      63,
+      169
+    ],
+    "center": [
+      0.6183510638297872,
+      0.6164465786314526
+    ],
+    "offset": 128067
+  },
+  {
+    "back": false,
+    "key": "trapG",
+    "id": 32,
+    "name": "Trapecio izquierdo",
+    "description": "Parte superior de la espalda y base del cuello, sobre el trapecio. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      214,
+      114,
+      43,
+      33
+    ],
+    "center": [
+      0.6103723404255319,
+      0.16146458583433373
+    ],
+    "offset": 138714
+  },
+  {
+    "back": false,
+    "key": "cheG",
+    "id": 33,
+    "name": "Tobillo izquierdo · vista frontal",
+    "description": "Articulación entre la pierna y el pie. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      197,
+      755,
+      31,
+      38
+    ],
+    "center": [
+      0.5704787234042553,
+      0.924969987995198
+    ],
+    "offset": 140133
+  },
+  {
+    "back": false,
+    "key": "pieG",
+    "id": 34,
+    "name": "Pie izquierdo",
+    "description": "Región del pie. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      197,
+      781,
+      44,
+      52
+    ],
+    "center": [
+      0.5731382978723404,
+      0.9729891956782714
+    ],
+    "offset": 141311
+  },
+  {
+    "back": false,
+    "key": "addG",
+    "id": 35,
+    "name": "Aductor izquierdo",
+    "description": "Cara interna del muslo, sobre los aductores. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      192,
+      443,
+      36,
+      116
+    ],
+    "center": [
+      0.5465425531914894,
+      0.5840336134453782
+    ],
+    "offset": 143599
+  },
+  {
+    "back": false,
+    "key": "hanG",
+    "id": 36,
+    "name": "Cadera izquierda",
+    "description": "Zona lateral de la pelvis, a la altura de la cadera. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      193,
+      352,
+      63,
+      100
+    ],
+    "center": [
+      0.6103723404255319,
+      0.49039615846338536
+    ],
+    "offset": 147775
+  },
+  {
+    "back": false,
+    "key": "biG",
+    "id": 37,
+    "name": "Bíceps izquierdo",
+    "description": "Parte anterior del brazo, sobre el bíceps. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      264,
+      191,
+      43,
+      93
+    ],
+    "center": [
+      0.7539893617021277,
+      0.2887154861944778
+    ],
+    "offset": 154075
+  },
+  {
+    "back": false,
+    "key": "mainG",
+    "id": 38,
+    "name": "Mano izquierda · vista frontal (superficie palmar)",
+    "description": "Región de la mano · palma. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      312,
+      403,
+      64,
+      74
+    ],
+    "center": [
+      0.9029255319148937,
+      0.5240096038415366
+    ],
+    "offset": 158074
+  },
+  {
+    "back": true,
+    "key": "col",
+    "id": 39,
+    "name": "Columna vertebral",
+    "description": "Línea central de la espalda, a lo largo de la columna vertebral. ",
+    "bounds": [
+      185,
+      89,
+      6,
+      292
+    ],
+    "center": [
+      0.5013297872340425,
+      0.25990396158463386
+    ],
+    "offset": 162810
+  },
+  {
+    "back": true,
+    "key": "tete",
+    "id": 40,
+    "name": "Cabeza · vista posterior",
+    "description": "Región de la cabeza. ",
+    "bounds": [
+      145,
+      0,
+      88,
+      86
+    ],
+    "center": [
+      0.5013297872340425,
+      0.0546218487394958
+    ],
+    "offset": 164562
+  },
+  {
+    "back": true,
+    "key": "dosG",
+    "id": 41,
+    "name": "Espalda (Lado izquierdo)",
+    "description": "Costado de la espalda, debajo de la región escapular. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      115,
+      219,
+      70,
+      135
+    ],
+    "center": [
+      0.39228723404255317,
+      0.33793517406962786
+    ],
+    "offset": 172130
+  },
+  {
+    "back": true,
+    "key": "epG",
+    "id": 42,
+    "name": "Hombro izquierdo · vista posterior",
+    "description": "Región del hombro, en la unión del brazo con el tronco. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      77,
+      146,
+      66,
+      59
+    ],
+    "center": [
+      0.2726063829787234,
+      0.2070828331332533
+    ],
+    "offset": 181580
+  },
+  {
+    "back": true,
+    "key": "couG",
+    "id": 43,
+    "name": "Codo izquierdo · vista posterior",
+    "description": "Parte posterior de la articulación del codo. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      66,
+      271,
+      39,
+      36
+    ],
+    "center": [
+      0.2300531914893617,
+      0.3487394957983193
+    ],
+    "offset": 185474
+  },
+  {
+    "back": true,
+    "key": "avbG",
+    "id": 44,
+    "name": "Antebrazo izquierdo · vista posterior (extensores)",
+    "description": "Región entre el codo y la muñeca, sobre los extensores. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      48,
+      287,
+      57,
+      95
+    ],
+    "center": [
+      0.19547872340425532,
+      0.4027611044417767
+    ],
+    "offset": 186878
+  },
+  {
+    "back": true,
+    "key": "poiG",
+    "id": 45,
+    "name": "Muñeca izquierda · vista posterior",
+    "description": "Articulación entre el antebrazo y la mano. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      38,
+      377,
+      39,
+      32
+    ],
+    "center": [
+      0.1529255319148936,
+      0.4723889555822329
+    ],
+    "offset": 192293
+  },
+  {
+    "back": true,
+    "key": "iscG",
+    "id": 46,
+    "name": "Isquiotibiales izquierdo",
+    "description": "Parte posterior del muslo, sobre los isquiotibiales. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      117,
+      438,
+      71,
+      146
+    ],
+    "center": [
+      0.40558510638297873,
+      0.6152460984393757
+    ],
+    "offset": 193541
+  },
+  {
+    "back": true,
+    "key": "molG",
+    "id": 47,
+    "name": "Pantorrilla izquierda",
+    "description": "Parte posterior de la pierna, sobre la pantorrilla. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      132,
+      632,
+      46,
+      127
+    ],
+    "center": [
+      0.4162234042553192,
+      0.8289315726290516
+    ],
+    "offset": 203907
+  },
+  {
+    "back": true,
+    "key": "trapG",
+    "id": 48,
+    "name": "Trapecio izquierdo",
+    "description": "Parte superior de la espalda y base del cuello, sobre el trapecio. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      118,
+      86,
+      67,
+      64
+    ],
+    "center": [
+      0.4321808510638298,
+      0.14945978391356543
+    ],
+    "offset": 209749
+  },
+  {
+    "back": true,
+    "key": "cheG",
+    "id": 49,
+    "name": "Tobillo izquierdo · vista posterior",
+    "description": "Articulación entre la pierna y el pie. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      147,
+      758,
+      38,
+      45
+    ],
+    "center": [
+      0.4375,
+      0.9309723889555822
+    ],
+    "offset": 214037
+  },
+  {
+    "back": true,
+    "key": "mainG",
+    "id": 50,
+    "name": "Mano izquierda · vista posterior (superficie dorsal)",
+    "description": "Región de la mano · dorso. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      0,
+      405,
+      64,
+      74
+    ],
+    "center": [
+      0.09973404255319149,
+      0.5264105642256903
+    ],
+    "offset": 215747
+  },
+  {
+    "back": true,
+    "key": "triG",
+    "id": 51,
+    "name": "Tríceps izquierdo",
+    "description": "Parte posterior del brazo, sobre el tríceps. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      69,
+      194,
+      43,
+      93
+    ],
+    "center": [
+      0.24601063829787234,
+      0.2923169267707083
+    ],
+    "offset": 220483
+  },
+  {
+    "back": true,
+    "key": "fesG",
+    "id": 52,
+    "name": "Glúteo izquierdo",
+    "description": "Región posterior de la pelvis, sobre el glúteo. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      125,
+      349,
+      65,
+      103
+    ],
+    "center": [
+      0.4162234042553192,
+      0.4891956782713085
+    ],
+    "offset": 224482
+  },
+  {
+    "back": true,
+    "key": "scaG",
+    "id": 53,
+    "name": "Región escapular izquierda",
+    "description": "Zona del omóplato, en la parte superior de la espalda. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      113,
+      149,
+      72,
+      125
+    ],
+    "center": [
+      0.40558510638297873,
+      0.23589435774309725
+    ],
+    "offset": 231177
+  },
+  {
+    "back": true,
+    "key": "pieG",
+    "id": 54,
+    "name": "Pie izquierdo · vista posterior",
+    "description": "Región del pie. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      143,
+      789,
+      42,
+      44
+    ],
+    "center": [
+      0.4428191489361702,
+      0.9765906362545018
+    ],
+    "offset": 240177
+  },
+  {
+    "back": true,
+    "key": "lombG",
+    "id": 55,
+    "name": "Lumbar izquierdo",
+    "description": "Parte baja de la espalda, entre las costillas y la pelvis. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      152,
+      299,
+      36,
+      90
+    ],
+    "center": [
+      0.4587765957446808,
+      0.4087635054021609
+    ],
+    "offset": 242025
+  },
+  {
+    "back": true,
+    "key": "genG",
+    "id": 56,
+    "name": "Rodilla izquierda · vista posterior",
+    "description": "Región de la articulación de la rodilla. Lado izquierdo de tu cuerpo.",
+    "bounds": [
+      129,
+      579,
+      55,
+      57
+    ],
+    "center": [
+      0.42154255319148937,
+      0.7292917166866747
+    ],
+    "offset": 245265
+  },
+  {
+    "back": true,
+    "key": "dosD",
+    "id": 57,
+    "name": "Espalda (Lado derecho)",
+    "description": "Costado de la espalda, debajo de la región escapular. Lado derecho de tu cuerpo.",
+    "bounds": [
+      192,
+      219,
+      70,
+      135
+    ],
+    "center": [
+      0.6103723404255319,
+      0.33793517406962786
+    ],
+    "offset": 248400
+  },
+  {
+    "back": true,
+    "key": "epD",
+    "id": 58,
+    "name": "Hombro derecho · vista posterior",
+    "description": "Región del hombro, en la unión del brazo con el tronco. Lado derecho de tu cuerpo.",
+    "bounds": [
+      233,
+      146,
+      67,
+      59
+    ],
+    "center": [
+      0.7300531914893617,
+      0.2070828331332533
+    ],
+    "offset": 257850
+  },
+  {
+    "back": true,
+    "key": "couD",
+    "id": 59,
+    "name": "Codo derecho · vista posterior",
+    "description": "Parte posterior de la articulación del codo. Lado derecho de tu cuerpo.",
+    "bounds": [
+      271,
+      271,
+      39,
+      36
+    ],
+    "center": [
+      0.7726063829787234,
+      0.3487394957983193
+    ],
+    "offset": 261803
+  },
+  {
+    "back": true,
+    "key": "avbD",
+    "id": 60,
+    "name": "Antebrazo derecho · vista posterior (extensores)",
+    "description": "Región entre el codo y la muñeca, sobre los extensores. Lado derecho de tu cuerpo.",
+    "bounds": [
+      272,
+      287,
+      56,
+      95
+    ],
+    "center": [
+      0.8045212765957447,
+      0.4027611044417767
+    ],
+    "offset": 263207
+  },
+  {
+    "back": true,
+    "key": "poiD",
+    "id": 61,
+    "name": "Muñeca derecha · vista posterior",
+    "description": "Articulación entre el antebrazo y la mano. Lado derecho de tu cuerpo.",
+    "bounds": [
+      300,
+      377,
+      38,
+      32
+    ],
+    "center": [
+      0.8497340425531915,
+      0.4723889555822329
+    ],
+    "offset": 268527
+  },
+  {
+    "back": true,
+    "key": "iscD",
+    "id": 62,
+    "name": "Isquiotibiales derecho",
+    "description": "Parte posterior del muslo, sobre los isquiotibiales. Lado derecho de tu cuerpo.",
+    "bounds": [
+      189,
+      438,
+      70,
+      146
+    ],
+    "center": [
+      0.5970744680851063,
+      0.6152460984393757
+    ],
+    "offset": 269743
+  },
+  {
+    "back": true,
+    "key": "molD",
+    "id": 63,
+    "name": "Pantorrilla derecha",
+    "description": "Parte posterior de la pierna, sobre la pantorrilla. Lado derecho de tu cuerpo.",
+    "bounds": [
+      198,
+      632,
+      46,
+      127
+    ],
+    "center": [
+      0.586436170212766,
+      0.8289315726290516
+    ],
+    "offset": 279963
+  },
+  {
+    "back": true,
+    "key": "trapD",
+    "id": 64,
+    "name": "Trapecio derecho",
+    "description": "Parte superior de la espalda y base del cuello, sobre el trapecio. Lado derecho de tu cuerpo.",
+    "bounds": [
+      192,
+      86,
+      66,
+      64
+    ],
+    "center": [
+      0.5678191489361702,
+      0.14945978391356543
+    ],
+    "offset": 285805
+  },
+  {
+    "back": true,
+    "key": "cheD",
+    "id": 65,
+    "name": "Tobillo derecho · vista posterior",
+    "description": "Articulación entre la pierna y el pie. Lado derecho de tu cuerpo.",
+    "bounds": [
+      191,
+      758,
+      38,
+      45
+    ],
+    "center": [
+      0.5651595744680851,
+      0.9309723889555822
+    ],
+    "offset": 290029
+  },
+  {
+    "back": true,
+    "key": "mainD",
+    "id": 66,
+    "name": "Mano derecha · vista posterior (superficie dorsal)",
+    "description": "Región de la mano · dorso. Lado derecho de tu cuerpo.",
+    "bounds": [
+      313,
+      405,
+      63,
+      74
+    ],
+    "center": [
+      0.9029255319148937,
+      0.5264105642256903
+    ],
+    "offset": 291739
+  },
+  {
+    "back": true,
+    "key": "triD",
+    "id": 67,
+    "name": "Tríceps derecho",
+    "description": "Parte posterior del brazo, sobre el tríceps. Lado derecho de tu cuerpo.",
+    "bounds": [
+      265,
+      194,
+      43,
+      93
+    ],
+    "center": [
+      0.7566489361702128,
+      0.29111644657863145
+    ],
+    "offset": 296401
+  },
+  {
+    "back": true,
+    "key": "fesD",
+    "id": 68,
+    "name": "Glúteo derecho",
+    "description": "Región posterior de la pelvis, sobre el glúteo. Lado derecho de tu cuerpo.",
+    "bounds": [
+      187,
+      349,
+      65,
+      103
+    ],
+    "center": [
+      0.586436170212766,
+      0.4891956782713085
+    ],
+    "offset": 300400
+  },
+  {
+    "back": true,
+    "key": "scaD",
+    "id": 69,
+    "name": "Región escapular derecha",
+    "description": "Zona del omóplato, en la parte superior de la espalda. Lado derecho de tu cuerpo.",
+    "bounds": [
+      191,
+      149,
+      73,
+      125
+    ],
+    "center": [
+      0.5944148936170213,
+      0.23589435774309725
+    ],
+    "offset": 307095
+  },
+  {
+    "back": true,
+    "key": "pieD",
+    "id": 70,
+    "name": "Pie derecho · vista posterior",
+    "description": "Región del pie. Lado derecho de tu cuerpo.",
+    "bounds": [
+      192,
+      789,
+      41,
+      44
+    ],
+    "center": [
+      0.5571808510638298,
+      0.9765906362545018
+    ],
+    "offset": 316220
+  },
+  {
+    "back": true,
+    "key": "lombD",
+    "id": 71,
+    "name": "Lumbar derecho",
+    "description": "Parte baja de la espalda, entre las costillas y la pelvis. Lado derecho de tu cuerpo.",
+    "bounds": [
+      189,
+      299,
+      36,
+      90
+    ],
+    "center": [
+      0.5412234042553191,
+      0.4087635054021609
+    ],
+    "offset": 318024
+  },
+  {
+    "back": true,
+    "key": "genD",
+    "id": 72,
+    "name": "Rodilla derecha · vista posterior",
+    "description": "Región de la articulación de la rodilla. Lado derecho de tu cuerpo.",
+    "bounds": [
+      192,
+      579,
+      55,
+      57
+    ],
+    "center": [
+      0.5811170212765957,
+      0.7292917166866747
+    ],
+    "offset": 321264
+  }
+]

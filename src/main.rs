@@ -10,6 +10,8 @@ use std::cell::RefCell;
 
 mod settings_editor;
 mod body_map;
+mod body_regions;
+mod body_legacy;
 mod kine;
 
 const APP_ID: &str = "org.diego.Bosu";
