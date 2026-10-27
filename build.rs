@@ -1,6 +1,10 @@
 fn main() {
     for path in [
         "data/resources.gresource.xml",
+        "data/icons/hicolor/scalable/actions/charge-symbolic.svg",
+        "data/icons/hicolor/scalable/categories/non-emergency-healthcare-symbolic.svg",
+        "data/icons/hicolor/scalable/mimetypes/calendar-alt-symbolic.svg",
+        "data/icons/hicolor/scalable/status/emblem-ok-symbolic.svg",
         "data/icons/hicolor/scalable/apps/org.diego.Bosu.svg",
         "data/icons/hicolor/symbolic/apps/org.diego.Bosu-symbolic.svg",
     ] {

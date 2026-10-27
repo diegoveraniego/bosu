@@ -1,9 +1,17 @@
-/* Native Adwaita structure; colour supports, rather than replaces, labels. */
-.group-blue list { background-color: alpha(@accent_bg_color, 0.12); }
-.group-green list { background-color: alpha(@success_color, 0.12); }
-.group-purple list { background-color: alpha(#c061cb, 0.12); }
-.group-orange list { background-color: alpha(@warning_color, 0.12); }
-.stat-card { background-color: @card_bg_color; border-radius: 12px; padding: 16px; }
-.calendar-day { border-radius: 8px; background-color: alpha(@window_fg_color, 0.05); }
-.activity-day { background-color: alpha(@accent_bg_color, 0.28); }
-.rest-day { background-color: alpha(@success_color, 0.16); }
+.group-blue list { background-color: alpha(@accent_bg_color, 0.20); }
+.group-green list { background-color: alpha(@success_color, 0.20); }
+.group-purple list { background-color: alpha(#c061cb, 0.20); }
+.group-orange list { background-color: alpha(@warning_color, 0.20); }
+.stat-card { background-color: @card_bg_color; border-radius: 12px; padding: 16px; margin: 6px; }
+.heatmap-box { min-width: 42px; min-height: 42px; border-radius: 8px; margin: 4px; }
+.heatmap-0 { background-color: alpha(@theme_fg_color, 0.05); }
+.heatmap-1 { background-color: #a1dab4; color: #172b26; }
+.heatmap-2 { background-color: #41b6c4; color: #102f33; }
+.heatmap-3 { background-color: #2c7fb8; color: white; }
+.heatmap-4 { background-color: #253494; color: white; }
+.heatmap-rest { background-color: alpha(@success_color, 0.16); }
+.circle-box { min-width: 40px; min-height: 40px; border-radius: 50%; background-color: alpha(@theme_fg_color, 0.1); margin: 3px; }
+.circle-box.done { background-color: @success_color; color: white; }
+.bar-chart-bar { background-color: @warning_color; border-radius: 4px 4px 0 0; min-width: 24px; margin: 2px; }
+.goal-pill { min-width: 24px; min-height: 12px; border-radius: 6px; background-color: alpha(@theme_fg_color, 0.1); margin: 2px; }
+.goal-pill.done { background-color: @accent_bg_color; }

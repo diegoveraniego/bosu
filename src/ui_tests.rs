@@ -66,6 +66,16 @@ fn ui_smoke_partial_session_linked_map_navigation_and_draft() {
     adw::init().unwrap();
     i18n::init("es");
     gio::resources_register_include!("bosu.gresource").unwrap();
+    let theme = gtk::IconTheme::for_display(&gtk::gdk::Display::default().unwrap());
+    theme.add_resource_path("/org/diego/Bosu/icons");
+    for name in [
+        "charge-symbolic",
+        "non-emergency-healthcare-symbolic",
+        "calendar-alt-symbolic",
+        "emblem-ok-symbolic",
+    ] {
+        assert!(theme.has_icon(name), "{name}");
+    }
     let provider = gtk::CssProvider::new();
     provider.load_from_string(include_str!("style.css"));
     gtk::style_context_add_provider_for_display(
@@ -92,10 +102,20 @@ fn ui_smoke_partial_session_linked_map_navigation_and_draft() {
     let routine = dropdown(&window, "Descanso o sensaciones");
     routine.set_selected(1);
     pump();
-    dropdown(&window, "Pendiente").set_selected(1);
+    let check = children(&window)
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::CheckButton>().ok())
+        .find(|c| c.tooltip_text().as_deref() == Some("Marcar ejercicio como hecho"))
+        .unwrap();
+    check.set_active(true);
     pump();
     capture(&window, "today.png");
-    buttons(&window, "Registrar")[0].emit_clicked();
+    children(&window)
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.tooltip_text().as_deref() == Some("Mapa antes de la sesión"))
+        .unwrap()
+        .emit_clicked();
     pump();
     let map = gtk::Window::list_toplevels()
         .into_iter()
@@ -113,7 +133,7 @@ fn ui_smoke_partial_session_linked_map_navigation_and_draft() {
             .values()
             .any(|d| d.mapa_antes.as_ref().is_some_and(|m| m.points.len() == 1))
     );
-    buttons(&window, "Guardar mi avance")[0].emit_clicked();
+    buttons(&window, "Guardar sesión")[0].emit_clicked();
     pump();
     let data = repo.snapshot();
     assert_eq!(data.sessions.len(), 1);
@@ -153,4 +173,27 @@ fn ui_smoke_partial_session_linked_map_navigation_and_draft() {
         1
     );
     std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn original_icons_are_bundled_with_the_binary() {
+    let bytes =
+        glib::Bytes::from_static(include_bytes!(concat!(env!("OUT_DIR"), "/bosu.gresource")));
+    let resource = gio::Resource::from_data(&bytes).unwrap();
+    for path in [
+        "scalable/actions/charge-symbolic.svg",
+        "scalable/categories/non-emergency-healthcare-symbolic.svg",
+        "scalable/mimetypes/calendar-alt-symbolic.svg",
+        "scalable/status/emblem-ok-symbolic.svg",
+        "scalable/apps/org.diego.Bosu.svg",
+        "symbolic/apps/org.diego.Bosu-symbolic.svg",
+    ] {
+        let data = resource
+            .lookup_data(
+                &format!("/org/diego/Bosu/icons/{path}"),
+                gio::ResourceLookupFlags::NONE,
+            )
+            .unwrap();
+        assert!(std::str::from_utf8(&data).unwrap().contains("<svg"));
+    }
 }

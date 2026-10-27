@@ -66,8 +66,8 @@ fn main() -> glib::ExitCode {
             ("app.preferences", vec!["<Control>comma"]),
             ("app.quit", vec!["<Control>q"]),
             ("app.open-today", vec!["<Control>1"]),
-            ("app.open-body", vec!["<Control>2"]),
-            ("app.open-progress", vec!["<Control>3"]),
+            ("app.open-body", vec!["<Control>3"]),
+            ("app.open-progress", vec!["<Control>2"]),
             ("app.shortcuts", vec!["<Control>question"]),
         ] {
             app.set_accels_for_action(action, &keys);
@@ -82,8 +82,8 @@ fn main() -> glib::ExitCode {
             .application(app)
             .title(crate::i18n::tr("Bosu"))
             .icon_name(APP_ID)
-            .default_width(520)
-            .default_height(820)
+            .default_width(450)
+            .default_height(800)
             .build();
         install_close_guard(&window);
         match storage::Repository::open(glib::user_data_dir()) {
@@ -166,12 +166,6 @@ fn rebuild(window: &adw::ApplicationWindow, repo: &storage::Repository) {
         &i18n::tr("Hoy"),
         "view-list-symbolic",
     );
-    stack.add_titled_with_icon(
-        &body_host,
-        Some("cuerpo"),
-        &i18n::tr("Cuerpo"),
-        "avatar-default-symbolic",
-    );
     let clamp = adw::Clamp::builder()
         .maximum_size(720)
         .child(&progress)
@@ -183,7 +177,13 @@ fn rebuild(window: &adw::ApplicationWindow, repo: &storage::Repository) {
             .build(),
         Some("progreso"),
         &i18n::tr("Progreso"),
-        "view-statistics-symbolic",
+        "charge-symbolic",
+    );
+    stack.add_titled_with_icon(
+        &body_host,
+        Some("cuerpo"),
+        &i18n::tr("Cuerpo"),
+        "avatar-default-symbolic",
     );
     let guard = Rc::new(Cell::new(false));
     let previous = Rc::new(RefCell::new("hoy".to_string()));
@@ -235,6 +235,20 @@ fn rebuild(window: &adw::ApplicationWindow, repo: &storage::Repository) {
         .policy(adw::ViewSwitcherPolicy::Narrow)
         .build();
     let header = adw::HeaderBar::builder().title_widget(&switcher).build();
+    header.pack_end(
+        &gtk::Button::builder()
+            .icon_name("emblem-system-symbolic")
+            .action_name("app.preferences")
+            .tooltip_text(i18n::tr("Preferencias"))
+            .build(),
+    );
+    header.pack_start(
+        &gtk::Button::builder()
+            .icon_name("help-about-symbolic")
+            .action_name("app.about")
+            .tooltip_text(i18n::tr("Acerca de Bosu"))
+            .build(),
+    );
     let menu = gio::Menu::new();
     menu.append(Some(&i18n::tr("Preferencias")), Some("app.preferences"));
     menu.append(Some(&i18n::tr("Atajos de teclado")), Some("app.shortcuts"));
@@ -318,7 +332,7 @@ fn rebuild(window: &adw::ApplicationWindow, repo: &storage::Repository) {
                 .developer_name("diegoveraniego")
                 .version(env!("CARGO_PKG_VERSION"))
                 .comments(crate::i18n::tr(
-                    "Entender cómo responde tu cuerpo y acompañar tu proceso, a tu ritmo.",
+                    "Registra cómo responde tu cuerpo, a tu ritmo.\n\nPuedes guardar sesiones completas, parciales, sensaciones o descanso. Las sesiones parciales cuentan como días de práctica.\n\nLos borradores se guardan en este equipo. Los mapas antes y después quedan vinculados a cada sesión. Dolor y esfuerzo son mediciones independientes y opcionales.\n\nUna zona sin marcar significa sin datos, no dolor cero. Los promedios solo usan mediciones explícitas. Los datos antiguos se conservan sin reinterpretarlos.\n\nLos recordatorios son opcionales y posponibles. Tus datos son locales; puedes respaldarlos, restaurarlos y deshacer la última eliminación.",
                 ))
                 .website("https://github.com/diegoveraniego/bosu")
                 .issue_url("https://github.com/diegoveraniego/bosu/issues")
@@ -430,8 +444,8 @@ fn show_shortcuts(parent: &adw::ApplicationWindow) {
         .build();
     for (title, keys) in [
         ("Hoy", "<Control>1"),
-        ("Cuerpo", "<Control>2"),
-        ("Progreso", "<Control>3"),
+        ("Cuerpo", "<Control>3"),
+        ("Progreso", "<Control>2"),
         ("Preferencias", "<Control>comma"),
         ("Cerrar Bosu", "<Control>q"),
     ] {

@@ -34,10 +34,12 @@ impl DraftState {
             Ok(())
         });
         if let Some(label) = self.status.upgrade() {
-            label.set_text(&crate::i18n::tr(match &result {
-                Ok(_) => "Borrador guardado en este equipo.",
-                Err(e) => e,
-            }));
+            if let Err(error) = &result {
+                label.set_text(&crate::i18n::tr(error));
+                label.set_visible(true);
+            } else {
+                label.set_visible(false);
+            }
         }
         if result.is_ok() {
             self.dirty.set(false);
@@ -72,17 +74,16 @@ impl Drop for DraftState {
         }
     }
 }
-fn title(row: &adw::ExpanderRow, doc: &RegistroSesion, index: usize) {
+fn title(row: &adw::ActionRow, doc: &RegistroSesion, index: usize) {
     let e = &doc.ejercicios[index];
-    row.set_subtitle(&crate::i18n::tr(&format!(
-        "{} · {}",
-        e.planeado,
-        match e.estado {
-            ExerciseState::Pending => "Pendiente",
-            ExerciseState::Done => "Hecho",
-            ExerciseState::Skipped => "Omitido",
-        }
-    )));
+    let detail = if e.estado == ExerciseState::Skipped {
+        format!("{} · {}", e.planeado, crate::i18n::tr("Omitido"))
+    } else if !e.realizado.trim().is_empty() {
+        format!("{} · {}", e.planeado, e.realizado)
+    } else {
+        e.planeado.clone()
+    };
+    row.set_subtitle(&detail);
 }
 fn summary(label: &Label, doc: &RegistroSesion) {
     let done = doc
@@ -90,20 +91,11 @@ fn summary(label: &Label, doc: &RegistroSesion) {
         .iter()
         .filter(|e| e.estado == ExerciseState::Done)
         .count();
-    let skipped = doc
-        .ejercicios
-        .iter()
-        .filter(|e| e.estado == ExerciseState::Skipped)
-        .count();
-    let text = if doc.estado == SessionState::Rest {
-        "Puedes registrar descanso y cómo te sientes.".to_string()
+    label.set_text(&if doc.estado == SessionState::Rest {
+        String::new()
     } else {
-        format!(
-            "{done}/{} ejercicios hechos · {skipped} omitidos. Puedes guardar una sesión parcial; hacer algo también es progreso.",
-            doc.ejercicios.len()
-        )
-    };
-    label.set_text(&crate::i18n::tr(&text));
+        format!("{done}/{}", doc.ejercicios.len())
+    });
 }
 fn open_map(button: &Button, state: Rc<DraftState>, before: bool, map_status: Label) {
     let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
@@ -137,9 +129,10 @@ fn open_map(button: &Button, state: Rc<DraftState>, before: bool, map_status: La
             }
             state.dirty.set(true);
             state.flush()?;
-            map_status.set_text(&crate::i18n::tr(&format!(
-                "{count} puntos en el mapa · borrador guardado"
-            )));
+            map_status.set_text(&format!(
+                "{} · {count}",
+                crate::i18n::tr(if before { "Antes" } else { "Después" })
+            ));
             Ok(())
         });
     let panel = crate::body_map::build_linked(
@@ -210,14 +203,6 @@ pub fn build(repo: Repository, on_changed: Rc<dyn Fn()>, toasts: adw::ToastOverl
         .margin_start(16)
         .margin_end(16)
         .build();
-    root.append(
-        &Label::builder()
-            .label(crate::i18n::tr("Hoy, a tu ritmo"))
-            .css_classes(["title-1"])
-            .halign(gtk::Align::Start)
-            .build(),
-    );
-    root.append(&Label::builder().label(crate::i18n::tr("Practica, adapta o descansa. Cada registro te ayuda a entender cómo responde tu cuerpo.")).wrap(true).xalign(0.).build());
     let data = repo.snapshot();
     let mut names = vec![crate::i18n::tr("Descanso o sensaciones")];
     names.extend(data.config.rutinas.iter().map(|r| r.nombre.clone()));
@@ -336,13 +321,8 @@ fn render(
     let status = Label::builder()
         .wrap(true)
         .xalign(0.)
-        .css_classes(["dim-label"])
+        .visible(false)
         .build();
-    status.set_text(&crate::i18n::tr(if data.drafts.contains_key(key) {
-        "Borrador recuperado. Puedes continuar donde lo dejaste."
-    } else {
-        "Los cambios se guardan como borrador en este equipo."
-    }));
     let state = Rc::new(DraftState {
         repo: repo.clone(),
         key: key.into(),
@@ -355,6 +335,12 @@ fn render(
     container.append(&status);
     let retry = Button::with_label(&crate::i18n::tr("Reintentar guardar borrador"));
     retry.set_halign(gtk::Align::Start);
+    retry.set_visible(false);
+    status.connect_visible_notify(glib::clone!(
+        #[weak]
+        retry,
+        move |label| retry.set_visible(label.is_visible())
+    ));
     retry.connect_clicked(glib::clone!(
         #[strong]
         state,
@@ -364,101 +350,110 @@ fn render(
         }
     ));
     container.append(&retry);
-    let before = adw::PreferencesGroup::builder()
-        .title(crate::i18n::tr("1 · Cómo estoy"))
-        .description(crate::i18n::tr(
-            "El mapa es opcional y queda vinculado a esta sesión.",
-        ))
+    let controls = Box::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(8)
+        .halign(gtk::Align::Center)
         .build();
-    let before_status = Label::builder()
-        .label(crate::i18n::tr(&format!(
-            "{} puntos",
-            state
-                .doc
-                .borrow()
-                .mapa_antes
-                .as_ref()
-                .map_or(0, |m| m.points.len())
-        )))
-        .wrap(true)
+    for before in [true, false] {
+        let map = if before {
+            state.doc.borrow().mapa_antes.clone()
+        } else {
+            state.doc.borrow().mapa_despues.clone()
+        };
+        let label = crate::i18n::tr(if before { "Antes" } else { "Después" });
+        let caption =
+            Label::new(Some(&map.map_or(label.clone(), |m| {
+                format!("{label} · {}", m.points.len())
+            })));
+        let content = Box::builder()
+            .orientation(Orientation::Horizontal)
+            .spacing(6)
+            .build();
+        content.append(&gtk::Image::from_icon_name("avatar-default-symbolic"));
+        content.append(&caption);
+        let button = Button::builder()
+            .child(&content)
+            .css_classes(["flat"])
+            .tooltip_text(crate::i18n::tr(if before {
+                "Mapa antes de la sesión"
+            } else {
+                "Mapa después de la sesión"
+            }))
+            .build();
+        button.connect_clicked(glib::clone!(
+            #[strong]
+            state,
+            #[weak]
+            caption,
+            move |button| open_map(button, state.clone(), before, caption)
+        ));
+        controls.append(&button);
+    }
+    let options = Box::builder()
+        .orientation(Orientation::Vertical)
+        .spacing(6)
+        .margin_top(8)
+        .margin_bottom(8)
+        .margin_start(8)
+        .margin_end(8)
         .build();
-    let before_row = adw::ActionRow::builder()
-        .use_markup(false)
-        .title(crate::i18n::tr("Mapa antes de la sesión"))
+    let popover = gtk::Popover::builder().child(&options).build();
+    controls.append(
+        &gtk::MenuButton::builder()
+            .icon_name("view-more-symbolic")
+            .popover(&popover)
+            .css_classes(["flat"])
+            .tooltip_text(crate::i18n::tr("Opciones de la sesión"))
+            .build(),
+    );
+    container.append(&controls);
+    let progress = Label::builder()
+        .xalign(1.)
+        .css_classes(["dim-label"])
         .build();
-    let before_button = Button::builder()
-        .label(crate::i18n::tr("Registrar"))
-        .valign(gtk::Align::Center)
-        .build();
-    before_row.add_suffix(&before_button);
-    before.add(&before_row);
-    container.append(&before);
-    container.append(&before_status);
-    before_button.connect_clicked(glib::clone!(
-        #[strong]
-        state,
-        #[weak]
-        before_status,
-        move |button| open_map(button, state.clone(), true, before_status)
-    ));
-    let progress = Label::builder().wrap(true).xalign(0.).build();
     summary(&progress, &state.doc.borrow());
     if state.doc.borrow().estado == SessionState::Rest {
         container.append(
-            &Label::builder()
-                .label(crate::i18n::tr(
-                    "Descansar también forma parte de tu proceso.",
-                ))
-                .wrap(true)
-                .css_classes(["title-3"])
+            &adw::StatusPage::builder()
+                .icon_name("non-emergency-healthcare-symbolic")
+                .title(crate::i18n::tr("Día de descanso"))
                 .build(),
         );
     } else {
-        container.append(
-            &Label::builder()
-                .label(crate::i18n::tr("2 · Lo que hice"))
-                .css_classes(["title-2"])
-                .xalign(0.)
-                .build(),
-        );
         let mut groups = std::collections::BTreeMap::<String, adw::PreferencesGroup>::new();
-        let mut order = Vec::new();
         let colors = ["group-blue", "group-green", "group-purple", "group-orange"];
         let exercises = state.doc.borrow().ejercicios.clone();
         for (index, exercise) in exercises.iter().enumerate() {
-            let category_key = format!(
+            let category = format!(
                 "{}:{}",
                 exercise.id.split(':').next().unwrap_or(""),
                 exercise.categoria
             );
-            if !groups.contains_key(&category_key) {
+            if !groups.contains_key(&category) {
                 let group = adw::PreferencesGroup::builder()
                     .title(&exercise.categoria)
                     .build();
-                group.add_css_class(colors[order.len() % colors.len()]);
+                group.add_css_class(colors[groups.len() % colors.len()]);
                 container.append(&group);
-                groups.insert(category_key.clone(), group);
-                order.push(exercise.categoria.clone());
+                groups.insert(category.clone(), group);
             }
-            let row = adw::ExpanderRow::builder()
+            let done = gtk::CheckButton::builder()
+                .active(exercise.estado == ExerciseState::Done)
+                .valign(gtk::Align::Center)
+                .tooltip_text(crate::i18n::tr("Marcar ejercicio como hecho"))
+                .build();
+            done.update_property(&[gtk::accessible::Property::Label(&exercise.nombre)]);
+            let row = adw::ActionRow::builder()
                 .use_markup(false)
                 .title(&exercise.nombre)
                 .title_lines(2)
                 .subtitle_lines(2)
+                .activatable_widget(&done)
                 .build();
+            row.add_prefix(&done);
             title(&row, &state.doc.borrow(), index);
-            let choice = crate::i18n::dropdown(&["Pendiente", "Hecho", "Omitido"]);
-            choice.set_valign(gtk::Align::Center);
-            choice.set_selected(match exercise.estado {
-                ExerciseState::Pending => 0,
-                ExerciseState::Done => 1,
-                ExerciseState::Skipped => 2,
-            });
-            choice.update_property(&[gtk::accessible::Property::Label(&format!(
-                "Estado de {}",
-                exercise.nombre
-            ))]);
-            row.add_suffix(&choice);
+            let details = adw::PreferencesGroup::new();
             let actual = adw::EntryRow::builder()
                 .use_markup(false)
                 .title(crate::i18n::tr(
@@ -471,21 +466,95 @@ fn render(
                 .title(crate::i18n::tr("Nota o motivo de omisión · opcional"))
                 .text(&exercise.motivo)
                 .build();
-            row.add_row(&actual);
-            row.add_row(&reason);
-            choice.connect_selected_notify(glib::clone!(
+            let skipped = gtk::CheckButton::builder()
+                .label(crate::i18n::tr("Omitido"))
+                .active(exercise.estado == ExerciseState::Skipped)
+                .build();
+            details.add(&actual);
+            details.add(&reason);
+            details.add(&skipped);
+            let box_details = Box::builder()
+                .orientation(Orientation::Vertical)
+                .margin_top(12)
+                .margin_bottom(12)
+                .margin_start(12)
+                .margin_end(12)
+                .width_request(290)
+                .build();
+            box_details.append(&details);
+            let popover = gtk::Popover::builder().child(&box_details).build();
+            row.add_suffix(
+                &gtk::MenuButton::builder()
+                    .icon_name("view-more-symbolic")
+                    .popover(&popover)
+                    .css_classes(["flat"])
+                    .valign(gtk::Align::Center)
+                    .tooltip_text(crate::i18n::tr("Detalles del ejercicio"))
+                    .build(),
+            );
+            let guard = Rc::new(Cell::new(false));
+            done.connect_toggled(glib::clone!(
                 #[strong]
                 state,
+                #[strong]
+                guard,
+                #[weak]
+                skipped,
                 #[weak]
                 row,
                 #[weak]
                 progress,
-                move |dd| {
+                move |check| {
+                    if guard.get() {
+                        return;
+                    }
+                    guard.set(true);
+                    if check.is_active() {
+                        skipped.set_active(false);
+                    }
+                    guard.set(false);
                     let mut doc = state.doc.borrow_mut();
-                    doc.ejercicios[index].estado = match dd.selected() {
-                        1 => ExerciseState::Done,
-                        2 => ExerciseState::Skipped,
-                        _ => ExerciseState::Pending,
+                    doc.ejercicios[index].estado = if check.is_active() {
+                        ExerciseState::Done
+                    } else if skipped.is_active() {
+                        ExerciseState::Skipped
+                    } else {
+                        ExerciseState::Pending
+                    };
+                    doc.prepare();
+                    title(&row, &doc, index);
+                    summary(&progress, &doc);
+                    drop(doc);
+                    state.changed();
+                }
+            ));
+            skipped.connect_toggled(glib::clone!(
+                #[strong]
+                state,
+                #[strong]
+                guard,
+                #[weak]
+                done,
+                #[weak]
+                row,
+                #[weak]
+                progress,
+                move |check| {
+                    if guard.get() {
+                        return;
+                    }
+                    guard.set(true);
+                    if check.is_active() {
+                        done.set_active(false);
+                    }
+                    guard.set(false);
+                    let mut doc = state.doc.borrow_mut();
+                    doc.ejercicios[index].estado = if check.is_active() {
+                        ExerciseState::Skipped
+                    } else if done.is_active() {
+                        ExerciseState::Done
+                    } else {
+                        ExerciseState::Pending
                     };
                     doc.prepare();
                     title(&row, &doc, index);
@@ -498,11 +567,14 @@ fn render(
                 #[strong]
                 state,
                 #[weak]
+                row,
+                #[weak]
                 progress,
                 move |entry| {
                     let mut doc = state.doc.borrow_mut();
                     doc.ejercicios[index].realizado = entry.text().into();
                     doc.prepare();
+                    title(&row, &doc, index);
                     summary(&progress, &doc);
                     drop(doc);
                     state.changed();
@@ -516,108 +588,68 @@ fn render(
                     state.changed();
                 }
             ));
-            groups[&category_key].add(&row);
+            groups[&category].add(&row);
         }
     }
     container.append(&progress);
-    let after = adw::PreferencesGroup::builder()
-        .title(crate::i18n::tr("3 · Cómo quedé"))
-        .description(crate::i18n::tr(
-            "Dolor y esfuerzo son registros distintos. Puedes dejar cualquiera sin medir.",
-        ))
+    let assessment = adw::PreferencesGroup::builder()
+        .title(crate::i18n::tr("Evaluación"))
         .build();
-    let after_row = adw::ActionRow::builder()
-        .use_markup(false)
-        .title(crate::i18n::tr("Mapa después de la sesión"))
-        .build();
-    let after_button = Button::builder()
-        .label(crate::i18n::tr("Registrar"))
+    let pain_value = state.doc.borrow().dolor;
+    let pain = gtk::CheckButton::builder()
+        .label(crate::i18n::tr("Dolor"))
+        .active(pain_value.is_some())
         .valign(gtk::Align::Center)
         .build();
-    after_row.add_suffix(&after_button);
-    after.add(&after_row);
-    let after_status = Label::builder()
-        .label(crate::i18n::tr(&format!(
-            "{} puntos",
-            state
-                .doc
-                .borrow()
-                .mapa_despues
-                .as_ref()
-                .map_or(0, |m| m.points.len())
-        )))
-        .wrap(true)
+    let scale = gtk::Scale::with_range(Orientation::Horizontal, 0., 10., 1.);
+    scale.set_value(pain_value.unwrap_or(0.));
+    scale.set_digits(0);
+    scale.set_draw_value(true);
+    scale.set_hexpand(true);
+    scale.set_sensitive(pain_value.is_some());
+    scale.update_property(&[gtk::accessible::Property::Label(&crate::i18n::tr(
+        "Dolor · 0 a 10",
+    ))]);
+    let pain_box = Box::builder()
+        .orientation(Orientation::Horizontal)
+        .spacing(12)
+        .margin_start(12)
+        .margin_end(12)
+        .margin_top(8)
+        .margin_bottom(8)
         .build();
-    after_button.connect_clicked(glib::clone!(
+    pain_box.append(&pain);
+    pain_box.append(&scale);
+    assessment.add(&pain_box);
+    pain.connect_toggled(glib::clone!(
         #[strong]
         state,
         #[weak]
-        after_status,
-        move |button| open_map(button, state.clone(), false, after_status)
+        scale,
+        move |check| {
+            scale.set_sensitive(check.is_active());
+            state.doc.borrow_mut().dolor = check.is_active().then(|| scale.value());
+            state.changed();
+        }
     ));
-    for pain in [true, false] {
-        let value = if pain {
-            state.doc.borrow().dolor
-        } else {
-            state.doc.borrow().esfuerzo
-        };
-        let record = adw::SwitchRow::builder()
-            .title(crate::i18n::tr(if pain {
-                "Registrar dolor"
-            } else {
-                "Registrar esfuerzo"
-            }))
-            .active(value.is_some())
-            .build();
-        let spin = adw::SpinRow::with_range(0., 10., 1.);
-        spin.set_title(&crate::i18n::tr(if pain {
-            "Dolor · 0 a 10"
-        } else {
-            "Esfuerzo · 0 a 10"
-        }));
-        spin.set_value(value.unwrap_or(0.));
-        spin.set_sensitive(value.is_some());
-        after.add(&record);
-        after.add(&spin);
-        record.connect_active_notify(glib::clone!(
-            #[strong]
-            state,
-            #[weak]
-            spin,
-            move |row| {
-                spin.set_sensitive(row.is_active());
-                let value = row.is_active().then(|| spin.value());
-                if pain {
-                    state.doc.borrow_mut().dolor = value;
-                } else {
-                    state.doc.borrow_mut().esfuerzo = value;
-                }
+    scale.connect_value_changed(glib::clone!(
+        #[strong]
+        state,
+        #[weak]
+        pain,
+        move |scale| {
+            if pain.is_active() {
+                state.doc.borrow_mut().dolor = Some(scale.value());
                 state.changed();
             }
-        ));
-        spin.connect_value_notify(glib::clone!(
-            #[strong]
-            state,
-            #[weak]
-            record,
-            move |row| {
-                if record.is_active() {
-                    if pain {
-                        state.doc.borrow_mut().dolor = Some(row.value());
-                    } else {
-                        state.doc.borrow_mut().esfuerzo = Some(row.value());
-                    }
-                    state.changed();
-                }
-            }
-        ));
-    }
+        }
+    ));
     let notes = adw::EntryRow::builder()
         .use_markup(false)
         .title(crate::i18n::tr("Notas de la sesión · opcional"))
         .text(&state.doc.borrow().notas)
         .build();
-    after.add(&notes);
+    assessment.add(&notes);
     notes.connect_changed(glib::clone!(
         #[strong]
         state,
@@ -626,12 +658,49 @@ fn render(
             state.changed();
         }
     ));
+    let extras = adw::ExpanderRow::builder()
+        .title(crate::i18n::tr("Más detalles"))
+        .build();
+    let effort_value = state.doc.borrow().esfuerzo;
+    let effort = adw::SwitchRow::builder()
+        .title(crate::i18n::tr("Registrar esfuerzo"))
+        .active(effort_value.is_some())
+        .build();
+    let spin = adw::SpinRow::with_range(0., 10., 1.);
+    spin.set_title(&crate::i18n::tr("Esfuerzo · 0 a 10"));
+    spin.set_value(effort_value.unwrap_or(0.));
+    spin.set_sensitive(effort_value.is_some());
+    extras.add_row(&effort);
+    extras.add_row(&spin);
+    effort.connect_active_notify(glib::clone!(
+        #[strong]
+        state,
+        #[weak]
+        spin,
+        move |row| {
+            spin.set_sensitive(row.is_active());
+            state.doc.borrow_mut().esfuerzo = row.is_active().then(|| spin.value());
+            state.changed();
+        }
+    ));
+    spin.connect_value_notify(glib::clone!(
+        #[strong]
+        state,
+        #[weak]
+        effort,
+        move |spin| {
+            if effort.is_active() {
+                state.doc.borrow_mut().esfuerzo = Some(spin.value());
+                state.changed();
+            }
+        }
+    ));
     let date = adw::EntryRow::builder()
         .use_markup(false)
         .title(crate::i18n::tr("Fecha · AAAA-MM-DD"))
         .text(&state.doc.borrow().fecha)
         .build();
-    after.add(&date);
+    extras.add_row(&date);
     date.connect_changed(glib::clone!(
         #[strong]
         state,
@@ -640,17 +709,18 @@ fn render(
             state.changed();
         }
     ));
-    container.append(&after);
-    container.append(&after_status);
+    assessment.add(&extras);
+    container.append(&assessment);
     let save = Button::builder()
         .label(crate::i18n::tr(
             if state.doc.borrow().estado == SessionState::Rest {
                 "Guardar descanso"
             } else {
-                "Guardar mi avance"
+                "Guardar sesión"
             },
         ))
-        .css_classes(["suggested-action", "pill"])
+        .css_classes(["suggested-action"])
+        .margin_top(12)
         .build();
     container.append(&save);
     save.connect_clicked(glib::clone!(
@@ -673,12 +743,9 @@ fn render(
                 Ok(()) => {
                     state.cancel();
                     toasts.add_toast(crate::toast(&crate::i18n::tr(match session.estado {
-                        SessionState::Partial => {
-                            "Sesión parcial guardada. Hacer una parte también cuenta."
-                        }
+                        SessionState::Partial => "Sesión parcial guardada.",
                         SessionState::Rest => "Descanso registrado.",
-                        SessionState::Complete => "Sesión guardada.",
-                        _ => "Tus sensaciones quedaron registradas.",
+                        _ => "Sesión guardada.",
                     })));
                     on_changed();
                     render(
@@ -696,22 +763,23 @@ fn render(
                         label.set_text(&crate::i18n::tr(&format!(
                             "No se pudo guardar. Tu registro sigue aquí: {error}"
                         )));
+                        label.set_visible(true);
                     }
                 }
             }
         }
     ));
-    let discard = Button::with_label(&crate::i18n::tr("Descartar borrador y empezar de nuevo"));
-    container.append(&discard);
+    let discard = Button::builder()
+        .label(crate::i18n::tr("Descartar borrador"))
+        .css_classes(["flat"])
+        .build();
+    options.append(&discard);
     discard.connect_clicked(glib::clone!(#[strong] state,#[strong] current,#[strong] on_changed,#[weak] toasts,#[weak] container,move|button|{
         let Some(parent)=button.root().and_downcast::<gtk::Window>()else{return;};
         let dialog=adw::MessageDialog::new(Some(&parent),Some(&crate::i18n::tr("¿Empezar un nuevo borrador?")),Some(&crate::i18n::tr("Solo se descartará el borrador de esta rutina. Las sesiones guardadas y los demás borradores se conservan.")));
         dialog.add_responses(&[("cancel",&crate::i18n::tr("Cancelar")),("discard",&crate::i18n::tr("Descartar borrador"))]);dialog.set_default_response(Some("cancel"));dialog.set_close_response("cancel");dialog.set_response_appearance("discard",adw::ResponseAppearance::Destructive);
-        dialog.connect_response(Some("discard"),glib::clone!(#[strong] state,#[strong] current,#[strong] on_changed,#[weak] toasts,#[weak] container,move|_,_|{
-            match state.repo.update(|data|{data.drafts.remove(&state.key);Ok(())}) {
-                Ok(())=>{state.cancel();render(&container,&state.repo,&state.key,current.clone(),on_changed.clone(),toasts.clone());},
-                Err(error)=>toasts.add_toast(crate::toast(&crate::i18n::tr(&format!("No se pudo descartar el borrador: {error}")))),
-            }
+        dialog.connect_response(Some("discard"),glib::clone!(#[strong] state,#[strong] current,#[strong] on_changed,#[weak] toasts,#[weak] container,move|_,_|match state.repo.update(|data|{data.drafts.remove(&state.key);Ok(())}){
+            Ok(())=>{state.cancel();render(&container,&state.repo,&state.key,current.clone(),on_changed.clone(),toasts.clone());},Err(error)=>toasts.add_toast(crate::toast(&error))
         }));dialog.present();
     }));
 }

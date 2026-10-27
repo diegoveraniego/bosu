@@ -11,37 +11,29 @@ pub fn populate(root: &Box, repo: &Repository) {
     let today = chrono::Local::now().date_naive();
     let monday = today - Duration::days(i64::from(today.weekday().num_days_from_monday()));
     let since = today - Duration::days(29);
-    root.append(
-        &Label::builder()
-            .label(crate::i18n::tr("Tu proceso"))
-            .css_classes(["title-1"])
-            .xalign(0.)
-            .build(),
-    );
-    root.append(&Label::builder().label(crate::i18n::tr("Las sesiones parciales cuentan como actividad. Los días sin registro quedan sin datos; descansar no borra tu avance.")).wrap(true).xalign(0.).build());
     let goals = adw::PreferencesGroup::builder()
-        .title(crate::i18n::tr("Esta semana · días de práctica"))
+        .title(crate::i18n::tr("Meta semanal"))
         .build();
     for goal in crate::weekly_goal::goals(&data.config, &data.sessions, monday) {
         let row = adw::ActionRow::builder()
             .use_markup(false)
             .title(&goal.name)
-            .subtitle(crate::i18n::tr(&format!(
-                "{}/{} días · {}",
-                goal.completed, goal.target, goal.description
-            )))
-            .subtitle_lines(3)
+            .subtitle(format!("{}/{}", goal.completed, goal.target))
+            .tooltip_text(&goal.description)
             .build();
-        let progress = gtk::ProgressBar::builder()
-            .fraction(if goal.target > 0 {
-                (goal.completed as f64 / f64::from(goal.target)).min(1.)
-            } else {
-                0.
-            })
-            .width_request(64)
+        let pills = Box::builder()
+            .orientation(gtk::Orientation::Horizontal)
+            .spacing(4)
             .valign(gtk::Align::Center)
             .build();
-        row.add_suffix(&progress);
+        for i in 0..goal.target {
+            let pill = Box::builder().css_classes(["goal-pill"]).build();
+            if (i as usize) < goal.completed {
+                pill.add_css_class("done");
+            }
+            pills.append(&pill);
+        }
+        row.add_suffix(&pills);
         goals.add(&row);
     }
     root.append(&goals);
@@ -58,45 +50,120 @@ pub fn populate(root: &Box, repo: &Repository) {
         .map(|s| &s.fecha)
         .collect::<BTreeSet<_>>()
         .len();
-    let partial = recent
-        .iter()
-        .filter(|s| {
-            s.estado == SessionState::Partial
-                || (s.ejercicios_completados > 0 && s.ejercicios_completados < s.ejercicios_totales)
-        })
-        .count();
-    let rests = recent
-        .iter()
-        .filter(|s| s.estado == SessionState::Rest)
-        .count();
     let pain: Vec<_> = recent.iter().filter_map(|s| s.dolor).collect();
     let effort: Vec<_> = recent.iter().filter_map(|s| s.esfuerzo).collect();
-    let group=adw::PreferencesGroup::builder().title(crate::i18n::tr("Últimos 30 días")).description(crate::i18n::tr("Promedios calculados solo con mediciones explícitas. Dolor y esfuerzo antiguos mezclados no se reinterpretan.")).build();
-    for (title, value) in [
-        ("Días con actividad", active.to_string()),
-        ("Sesiones parciales", partial.to_string()),
-        ("Descansos registrados", rests.to_string()),
-        ("Dolor registrado", average(&pain)),
-        ("Esfuerzo registrado", average(&effort)),
-    ] {
-        group.add(
-            &adw::ActionRow::builder()
-                .use_markup(false)
-                .title(crate::i18n::tr(title))
-                .subtitle(crate::i18n::tr(&value))
+    let grid = gtk::Grid::builder()
+        .column_spacing(12)
+        .row_spacing(12)
+        .column_homogeneous(true)
+        .build();
+    for (index, (title, value, tooltip, icon)) in [
+        (
+            "registros",
+            data.sessions.len().to_string(),
+            crate::i18n::tr("Sesiones, sensaciones y descansos guardados"),
+            "calendar-alt-symbolic",
+        ),
+        (
+            "dolor promedio",
+            compact_average(&pain),
+            average(&pain),
+            "non-emergency-healthcare-symbolic",
+        ),
+        (
+            "días activos",
+            active.to_string(),
+            crate::i18n::tr("Últimos 30 días · incluye sesiones parciales"),
+            "emblem-ok-symbolic",
+        ),
+        (
+            "esfuerzo promedio",
+            compact_average(&effort),
+            average(&effort),
+            "charge-symbolic",
+        ),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let card = Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(6)
+            .css_classes(["stat-card"])
+            .tooltip_text(crate::i18n::tr(&tooltip))
+            .build();
+        let heading = Box::builder()
+            .orientation(gtk::Orientation::Horizontal)
+            .spacing(8)
+            .build();
+        heading.append(
+            &Label::builder()
+                .label(format!(
+                    "<span size='xx-large' weight='bold'>{value}</span>"
+                ))
+                .use_markup(true)
+                .halign(gtk::Align::Start)
                 .build(),
         );
+        heading.append(&gtk::Image::from_icon_name(icon));
+        card.append(&heading);
+        card.append(
+            &Label::builder()
+                .label(crate::i18n::tr(title))
+                .xalign(0.)
+                .css_classes(["dim-label"])
+                .build(),
+        );
+        grid.attach(&card, (index % 2) as i32, (index / 2) as i32, 1, 1);
     }
-    root.append(&group);
-    let calendar = adw::PreferencesGroup::builder()
-        .title(crate::i18n::tr("Últimas cinco semanas"))
-        .description(crate::i18n::tr(
-            "Cada celda resume todos los registros de ese día.",
-        ))
+    root.append(&grid);
+    root.append(&section("Esta semana"));
+    let week = Box::builder()
+        .orientation(gtk::Orientation::Horizontal)
+        .spacing(6)
+        .halign(gtk::Align::Center)
         .build();
-    let grid = gtk::Grid::builder()
-        .column_spacing(5)
-        .row_spacing(5)
+    for (i, name) in ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+        .iter()
+        .enumerate()
+    {
+        let date = monday + Duration::days(i as i64);
+        let key = date.format("%Y-%m-%d").to_string();
+        let day: Vec<_> = data.sessions.iter().filter(|s| s.fecha == key).collect();
+        let activity = day.iter().any(|s| s.has_activity());
+        let rest = day.iter().any(|s| s.estado == SessionState::Rest);
+        let circle = Label::builder()
+            .label(if activity {
+                "✓"
+            } else if rest {
+                "◌"
+            } else {
+                ""
+            })
+            .css_classes(["circle-box"])
+            .tooltip_text(format!("{key} · {}", day.len()))
+            .build();
+        if activity {
+            circle.add_css_class("done");
+        }
+        let column = Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(6)
+            .build();
+        column.append(&circle);
+        column.append(
+            &Label::builder()
+                .label(crate::i18n::tr(name))
+                .css_classes(["dim-label"])
+                .build(),
+        );
+        week.append(&column);
+    }
+    root.append(&week);
+    root.append(&section("Últimas cinco semanas"));
+    let heatmap = gtk::Grid::builder()
+        .column_spacing(4)
+        .row_spacing(4)
         .halign(gtk::Align::Center)
         .build();
     for i in 0..35 {
@@ -105,53 +172,92 @@ pub fn populate(root: &Box, repo: &Repository) {
         let day: Vec<_> = data.sessions.iter().filter(|s| s.fecha == key).collect();
         let activity = day.iter().any(|s| s.has_activity());
         let rest = day.iter().any(|s| s.estado == SessionState::Rest);
-        let label = Label::builder()
-            .label(format!(
-                "{}{}",
-                date.day(),
-                if activity {
-                    " ●"
-                } else if rest {
-                    " ◌"
-                } else {
-                    ""
-                }
-            ))
-            .width_request(30)
-            .height_request(30)
-            .css_classes(["calendar-day"])
-            .build();
-        if activity {
-            label.add_css_class("activity-day");
-        } else if rest {
-            label.add_css_class("rest-day");
-        }
-        let desc = format!(
-            "{key} · {} registros · {} con actividad{}",
+        let completed: usize = day
+            .iter()
+            .filter(|s| s.has_activity())
+            .map(|s| s.ejercicios_completados)
+            .sum();
+        let total: usize = day
+            .iter()
+            .filter(|s| s.has_activity())
+            .map(|s| s.ejercicios_totales)
+            .sum();
+        let fraction = if total > 0 {
+            completed as f64 / total as f64
+        } else {
+            0.
+        };
+        let class = if !activity {
+            "heatmap-0"
+        } else if fraction > 0.8 {
+            "heatmap-4"
+        } else if fraction > 0.5 {
+            "heatmap-3"
+        } else if fraction > 0.2 {
+            "heatmap-2"
+        } else {
+            "heatmap-1"
+        };
+        let desc = crate::i18n::tr(&format!(
+            "{key} · {} registros · {} con actividad",
             day.len(),
-            day.iter().filter(|s| s.has_activity()).count(),
-            if rest { " · descanso registrado" } else { "" }
-        );
-        label.set_tooltip_text(Some(&desc));
-        label.update_property(&[gtk::accessible::Property::Label(&desc)]);
-        grid.attach(&label, (i % 7) as i32, (i / 7) as i32, 1, 1);
+            day.iter().filter(|s| s.has_activity()).count()
+        ));
+        let cell = Label::builder()
+            .label(date.day().to_string())
+            .css_classes(["heatmap-box", class])
+            .tooltip_text(&desc)
+            .build();
+        if rest && !activity {
+            cell.add_css_class("heatmap-rest");
+        }
+        cell.update_property(&[gtk::accessible::Property::Label(&desc)]);
+        heatmap.attach(&cell, (i % 7) as i32, (i / 7) as i32, 1, 1);
     }
-    calendar.add(&grid);
-    root.append(&calendar);
-    let history = adw::PreferencesGroup::builder()
-        .title(crate::i18n::tr("Registros recientes"))
+    root.append(&heatmap);
+    root.append(&section("Dolor · últimos registros"));
+    let bars = Box::builder()
+        .orientation(gtk::Orientation::Horizontal)
+        .spacing(10)
+        .halign(gtk::Align::Center)
+        .height_request(125)
         .build();
-    if data.sessions.is_empty() {
-        root.append(
-            &adw::StatusPage::builder()
-                .icon_name("document-edit-symbolic")
-                .title(crate::i18n::tr("Tu proceso empieza con un registro"))
-                .description(crate::i18n::tr(
-                    "Puedes guardar una sesión parcial, sensaciones o un día de descanso.",
-                ))
+    let mut measured: Vec<_> = data.sessions.iter().filter(|s| s.dolor.is_some()).collect();
+    measured.sort_by(|a, b| {
+        a.fecha
+            .cmp(&b.fecha)
+            .then_with(|| a.registrado_en.cmp(&b.registrado_en))
+    });
+    for session in measured.iter().skip(measured.len().saturating_sub(7)) {
+        let pain = session.dolor.unwrap_or(0.);
+        let desc = format!("{} · {pain}/10", session.fecha);
+        let column = Box::builder()
+            .orientation(gtk::Orientation::Vertical)
+            .spacing(4)
+            .valign(gtk::Align::End)
+            .tooltip_text(&desc)
+            .build();
+        let bar = Box::builder()
+            .height_request((pain * 10.).max(2.) as i32)
+            .css_classes(["bar-chart-bar"])
+            .build();
+        column.append(&bar);
+        column.append(&Label::new(Some(&format!("{pain:.0}"))));
+        column.update_property(&[gtk::accessible::Property::Label(&desc)]);
+        bars.append(&column);
+    }
+    if measured.is_empty() {
+        bars.append(
+            &Label::builder()
+                .label(crate::i18n::tr("Sin mediciones"))
+                .css_classes(["dim-label"])
                 .build(),
         );
     }
+    root.append(&bars);
+    let history = adw::PreferencesGroup::builder()
+        .title(crate::i18n::tr("Registros recientes"))
+        .build();
     let mut ordered: Vec<_> = data.sessions.iter().collect();
     ordered.sort_by(|a, b| {
         b.fecha
@@ -220,6 +326,20 @@ pub fn populate(root: &Box, repo: &Repository) {
         history.add(&row);
     }
     root.append(&history);
+}
+fn section(title: &str) -> Label {
+    Label::builder()
+        .label(crate::i18n::tr(title))
+        .css_classes(["heading", "dim-label"])
+        .xalign(0.)
+        .build()
+}
+fn compact_average(values: &[f64]) -> String {
+    if values.is_empty() {
+        "—".into()
+    } else {
+        format!("{:.1}", values.iter().sum::<f64>() / values.len() as f64)
+    }
 }
 fn average(values: &[f64]) -> String {
     if values.is_empty() {

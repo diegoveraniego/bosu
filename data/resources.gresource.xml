@@ -6,4 +6,8 @@
   <gresource prefix="/org/diego/Bosu/icons/symbolic/apps">
     <file alias="org.diego.Bosu-symbolic.svg">icons/hicolor/symbolic/apps/org.diego.Bosu-symbolic.svg</file>
   </gresource>
+  <gresource prefix="/org/diego/Bosu/icons/scalable/actions"><file alias="charge-symbolic.svg">icons/hicolor/scalable/actions/charge-symbolic.svg</file></gresource>
+  <gresource prefix="/org/diego/Bosu/icons/scalable/categories"><file alias="non-emergency-healthcare-symbolic.svg">icons/hicolor/scalable/categories/non-emergency-healthcare-symbolic.svg</file></gresource>
+  <gresource prefix="/org/diego/Bosu/icons/scalable/mimetypes"><file alias="calendar-alt-symbolic.svg">icons/hicolor/scalable/mimetypes/calendar-alt-symbolic.svg</file></gresource>
+  <gresource prefix="/org/diego/Bosu/icons/scalable/status"><file alias="emblem-ok-symbolic.svg">icons/hicolor/scalable/status/emblem-ok-symbolic.svg</file></gresource>
 </gresources>

@@ -104,7 +104,7 @@ La instalación de usuario no necesita `sudo`:
 
 Instala el ejecutable en `~/.local/bin`, el lanzador, el icono y la activación D-Bus.
 El icono y los estilos también están integrados en el binario para el uso desde el proyecto.
-El menú principal incluye Preferencias, atajos y Acerca de. `Ctrl+1`, `Ctrl+2` y `Ctrl+3`
+La vista Hoy conserva las casillas y los colores de cada categoría. Los datos reales y la omisión de ejercicios se editan desde el botón de detalles de cada fila. Progreso mantiene tarjetas, círculos semanales y el heatmap. La explicación del funcionamiento está en Acerca de, fuera del flujo diario. El menú principal incluye Preferencias, atajos y Acerca de. `Ctrl+1`, `Ctrl+2` y `Ctrl+3`
 recorren las vistas; `Ctrl+,` abre Preferencias y `Ctrl+Q` cierra guardando el borrador.
 
 ## Flatpak
