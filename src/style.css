@@ -1,0 +1,9 @@
+/* Native Adwaita structure; colour supports, rather than replaces, labels. */
+.group-blue list { background-color: alpha(@accent_bg_color, 0.12); }
+.group-green list { background-color: alpha(@success_color, 0.12); }
+.group-purple list { background-color: alpha(#c061cb, 0.12); }
+.group-orange list { background-color: alpha(@warning_color, 0.12); }
+.stat-card { background-color: @card_bg_color; border-radius: 12px; padding: 16px; }
+.calendar-day { border-radius: 8px; background-color: alpha(@window_fg_color, 0.05); }
+.activity-day { background-color: alpha(@accent_bg_color, 0.28); }
+.rest-day { background-color: alpha(@success_color, 0.16); }

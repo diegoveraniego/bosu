@@ -23,8 +23,8 @@ const COLORS: [(f64, f64, f64); 6] = [
     (0.15, 0.6, 0.9),
     (0.2, 0.7, 0.4),
 ];
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub(crate) struct Point {
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Point {
     pub(crate) x: f64,
     pub(crate) y: f64,
     pub(crate) back: bool,
@@ -34,8 +34,8 @@ pub(crate) struct Point {
     #[serde(default)]
     pub(crate) intensity: Option<u8>,
 }
-#[derive(Clone, Serialize, Deserialize)]
-pub(crate) struct Snapshot {
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Snapshot {
     pub(crate) date: String,
     pub(crate) points: Vec<Point>,
     /// Missing on old records, whose coordinates belong to the original silhouette.
@@ -43,19 +43,8 @@ pub(crate) struct Snapshot {
     pub(crate) map_version: u8,
     #[serde(default)]
     pub(crate) moment: String,
-}
-fn path() -> std::path::PathBuf {
-    glib::user_data_dir().join("bosu_body.json")
-}
-fn persist(history: &[Snapshot]) -> Result<(), String> {
-    std::fs::create_dir_all(glib::user_data_dir()).map_err(|e| e.to_string())?;
-    let temp = path().with_extension("json.tmp");
-    std::fs::write(
-        &temp,
-        serde_json::to_vec_pretty(history).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
-    std::fs::rename(temp, path()).map_err(|e| e.to_string())
+    #[serde(default)]
+    pub(crate) session_id: Option<String>,
 }
 fn hit(points: &[Point], x: f64, y: f64, back: bool, w: f64, h: f64) -> Option<usize> {
     points
@@ -64,17 +53,18 @@ fn hit(points: &[Point], x: f64, y: f64, back: bool, w: f64, h: f64) -> Option<u
 }
 fn describe(label: &Label, model: &Model, index: Option<usize>) {
     if let Some(shape) = index.and_then(|i| model.shapes.get(i)) {
-        label.set_text(&format!(
+        label.set_text(&crate::i18n::tr(&format!(
             "{}\n{}",
-            shape.region.name, shape.region.description
-        ));
+            crate::i18n::tr(&shape.region.name),
+            crate::i18n::tr(&shape.region.description)
+        )));
     } else {
-        label.set_text("Señala una zona del cuerpo o elígela por su nombre. Izquierda y derecha corresponden a tu cuerpo.");
+        label.set_text(&crate::i18n::tr("Señala una zona del cuerpo o elígela por su nombre. Izquierda y derecha corresponden a tu cuerpo."));
     }
 }
 fn summarize(label: &Label, points: &[Point], model: &Model, version: u8) {
     if points.is_empty() {
-        label.set_text("Sin puntos en este registro.");
+        label.set_text(&crate::i18n::tr("Sin puntos en este registro."));
         return;
     }
     let lines: Vec<_> = points
@@ -92,19 +82,55 @@ fn summarize(label: &Label, points: &[Point], model: &Model, version: u8) {
             };
             format!(
                 "● {} · {} · {} · {}",
-                name,
-                if p.back { "espalda" } else { "frente" },
-                KINDS[p.kind.min(KINDS.len() - 1)],
+                crate::i18n::tr(name),
+                crate::i18n::tr(if p.back { "espalda" } else { "frente" }),
+                crate::i18n::tr(KINDS[p.kind.min(KINDS.len() - 1)]),
                 p.intensity
                     .map(|v| format!("{}/10", v.min(10)))
-                    .unwrap_or_else(|| "intensidad sin registrar".into())
+                    .unwrap_or_else(|| crate::i18n::tr("intensidad sin registrar"))
             )
         })
         .collect();
     label.set_text(&lines.join("\n"));
 }
 
-pub fn build() -> gtk::ScrolledWindow {
+pub struct Panel {
+    pub widget: gtk::ScrolledWindow,
+    pub flush: Rc<dyn Fn() -> Result<(), String>>,
+}
+struct Linked {
+    initial: Option<Snapshot>,
+    moment: String,
+    session_id: String,
+    save: Rc<dyn Fn(Snapshot) -> Result<(), String>>,
+}
+pub fn build(repo: crate::storage::Repository, on_changed: Rc<dyn Fn()>) -> Panel {
+    build_editor(repo, on_changed, None)
+}
+pub fn build_linked(
+    repo: crate::storage::Repository,
+    initial: Option<Snapshot>,
+    moment: &str,
+    session_id: String,
+    save: Rc<dyn Fn(Snapshot) -> Result<(), String>>,
+) -> Panel {
+    build_editor(
+        repo,
+        Rc::new(|| {}),
+        Some(Linked {
+            initial,
+            moment: moment.into(),
+            session_id,
+            save,
+        }),
+    )
+}
+fn build_editor(
+    repo: crate::storage::Repository,
+    on_changed: Rc<dyn Fn()>,
+    linked: Option<Linked>,
+) -> Panel {
+    let linked = linked.map(Rc::new);
     let root = Box::builder()
         .orientation(Orientation::Vertical)
         .spacing(12)
@@ -118,30 +144,37 @@ pub fn build() -> gtk::ScrolledWindow {
         Err(e) => {
             root.append(
                 &Label::builder()
-                    .label(format!("No se pudo cargar el mapa SVG: {e}"))
+                    .label(crate::i18n::tr(&format!(
+                        "No se pudo cargar el mapa corporal: {e}"
+                    )))
                     .wrap(true)
                     .build(),
             );
-            return gtk::ScrolledWindow::builder().child(&root).build();
+            return Panel {
+                widget: gtk::ScrolledWindow::builder().child(&root).build(),
+                flush: Rc::new(|| Err("No se pudo cargar el mapa corporal".into())),
+            };
         }
     };
     root.append(
         &Label::builder()
-            .label("Mi cuerpo")
+            .label(crate::i18n::tr("Mi cuerpo"))
             .css_classes(["title-1"])
             .build(),
     );
-    root.append(&Label::builder().label("Elige una sensación y toca una zona para crear un punto. Arrastra para moverlo; selecciona un punto para editar su sensación e intensidad.").wrap(true).build());
-    let side = DropDown::from_strings(&["Frente", "Espalda"]);
-    let kind = DropDown::from_strings(&KINDS);
-    kind.set_tooltip_text(Some("Sensación para los puntos nuevos o seleccionados"));
+    root.append(&Label::builder().label(crate::i18n::tr("Elige una sensación y toca una zona para crear un punto. Arrastra para moverlo; selecciona un punto para editar su sensación e intensidad.")).wrap(true).build());
+    let side = crate::i18n::dropdown(&["Frente", "Espalda"]);
+    let kind = crate::i18n::dropdown(&KINDS);
+    kind.set_tooltip_text(Some(&crate::i18n::tr(
+        "Sensación para los puntos nuevos o seleccionados",
+    )));
     let views = Box::builder()
         .orientation(Orientation::Horizontal)
         .halign(gtk::Align::Center)
         .css_classes(["linked"])
         .build();
-    let front = gtk::ToggleButton::with_label("Frente");
-    let back = gtk::ToggleButton::with_label("Espalda");
+    let front = gtk::ToggleButton::with_label(&crate::i18n::tr("Frente"));
+    let back = gtk::ToggleButton::with_label(&crate::i18n::tr("Espalda"));
     back.set_group(Some(&front));
     front.set_active(true);
     front.connect_toggled(glib::clone!(
@@ -169,45 +202,44 @@ pub fn build() -> gtk::ScrolledWindow {
     intensity.update_property(&[gtk::accessible::Property::Label(
         "Intensidad de la sensación de 0 a 10",
     )]);
-    root.append(&Label::new(Some("Intensidad · 0 a 10")));
+    root.append(&Label::new(Some(&crate::i18n::tr("Intensidad · 0 a 10"))));
     root.append(&intensity);
-    let moment = DropDown::from_strings(&[
+    let moment = crate::i18n::dropdown(&[
         "Registro general",
         "Antes de la sesión",
         "Después de la sesión",
     ]);
     root.append(&moment);
-    let heatmap = gtk::CheckButton::with_label("Ver calor por intensidad de la sensación elegida");
+    let heatmap = gtk::CheckButton::with_label(&crate::i18n::tr(
+        "Ver calor por intensidad de la sensación elegida",
+    ));
     root.append(&heatmap);
-    let heat_filter = DropDown::from_strings(&KINDS);
+    let heat_filter = crate::i18n::dropdown(&KINDS);
     heat_filter.set_tooltip_text(Some(
         "Sensación que se muestra en el heatmap; no modifica tus puntos",
     ));
     heat_filter.set_visible(false);
     root.append(&heat_filter);
-    root.append(&Label::builder().use_markup(true).wrap(true).label("<span foreground='#e63333'>● Dolor</span>   <span foreground='#f2a619'>● Tensión</span>   <span foreground='#8059d9'>● Cansancio</span>\n<span foreground='#e64d99'>● Irritado</span>   <span foreground='#2699e6'>● Trabajado</span>   <span foreground='#33b366'>● Fuerte</span>").build());
-    let (initial, load_error) = match std::fs::read(path()) {
-        Ok(bytes) => match serde_json::from_slice::<Vec<Snapshot>>(&bytes) {
-            Ok(h) => (h, None),
-            Err(e) => (vec![], Some(e.to_string())),
-        },
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => (vec![], None),
-        Err(e) => (vec![], Some(e.to_string())),
+    root.append(&Label::builder().use_markup(true).wrap(true).label(crate::i18n::tr("<span foreground='#e63333'>● Dolor</span>   <span foreground='#f2a619'>● Tensión</span>   <span foreground='#8059d9'>● Cansancio</span>\n<span foreground='#e64d99'>● Irritado</span>   <span foreground='#2699e6'>● Trabajado</span>   <span foreground='#33b366'>● Fuerte</span>")).build());
+    let history = Rc::new(RefCell::new(repo.all_maps()));
+    let latest = if let Some(link) = &linked {
+        link.initial.clone()
+    } else {
+        repo.snapshot().body_draft.or_else(|| {
+            history
+                .borrow()
+                .last()
+                .filter(|s| s.map_version == 1)
+                .cloned()
+        })
     };
-    let history = Rc::new(RefCell::new(initial));
-    // Start on the detailed model. Old coordinates are displayed only on their original model.
-    let latest = history
-        .borrow()
-        .last()
-        .filter(|s| s.map_version == 1)
-        .cloned();
     let points = Rc::new(RefCell::new(
         latest
             .as_ref()
             .map(|s| s.points.clone())
             .unwrap_or_default(),
     ));
-    let version = Rc::new(Cell::new(1u8));
+    let version = Rc::new(Cell::new(latest.as_ref().map_or(1, |s| s.map_version)));
     let selected = Rc::new(Cell::new(None::<usize>));
     let selected_point = Rc::new(Cell::new(None::<usize>));
     let updating_controls = Rc::new(Cell::new(false));
@@ -218,6 +250,10 @@ pub fn build() -> gtk::ScrolledWindow {
             _ => 0,
         });
     }
+    if let Some(link) = &linked {
+        moment.set_selected(if link.moment == "before" { 1 } else { 2 });
+        moment.set_visible(false);
+    }
     let hover = Rc::new(Cell::new(None::<usize>));
     let zone = Label::builder()
         .wrap(true)
@@ -226,26 +262,30 @@ pub fn build() -> gtk::ScrolledWindow {
         .build();
     describe(&zone, &model, None);
     root.append(&zone);
-    let mut names = vec!["Seleccionar zona por nombre…".to_string()];
+    let mut names = vec![crate::i18n::tr("Seleccionar zona por nombre…")];
     names.extend(model.shapes.iter().map(|s| {
         format!(
             "{} · {}",
-            if s.region.back { "Espalda" } else { "Frente" },
-            s.region.name
+            crate::i18n::tr(if s.region.back { "Espalda" } else { "Frente" }),
+            crate::i18n::tr(&s.region.name)
         )
     }));
     let regions = DropDown::from_strings(&names.iter().map(|s| s.as_str()).collect::<Vec<_>>());
     regions.set_enable_search(true);
-    regions.update_property(&[gtk::accessible::Property::Label("Zona del cuerpo")]);
+    regions.update_property(&[gtk::accessible::Property::Label(&crate::i18n::tr(
+        "Zona del cuerpo",
+    ))]);
     root.append(&regions);
     let area = DrawingArea::builder()
         .content_width(270)
         .content_height(600)
         .halign(gtk::Align::Center)
-        .tooltip_text("Selecciona una zona; clic derecho sobre un punto para eliminarlo")
+        .tooltip_text(crate::i18n::tr(
+            "Selecciona una zona; clic derecho sobre un punto para eliminarlo",
+        ))
         .build();
     area.update_property(&[gtk::accessible::Property::Label(
-        "Mapa corporal SVG con 73 zonas. También puedes elegir una zona por nombre.",
+        "Mapa corporal con 73 zonas. También puedes elegir una zona por nombre.",
     )]);
     area.set_draw_func(glib::clone!(
         #[strong]
@@ -274,6 +314,7 @@ pub fn build() -> gtk::ScrolledWindow {
                     points: points.borrow().clone(),
                     map_version: version.get(),
                     moment: String::new(),
+                    session_id: None,
                 };
                 model.draw_heat(
                     cr,
@@ -653,16 +694,16 @@ pub fn build() -> gtk::ScrolledWindow {
     area.add_controller(remove);
     root.append(&area);
     let status = Label::builder().wrap(true).build();
-    if let Some(e) = &load_error {
-        status.set_text(&format!("No se pudo leer el historial corporal: {e}"));
-    }
-    let mark = Button::with_label("Marcar zona seleccionada");
+
+    let mark = Button::with_label(&crate::i18n::tr("Marcar zona seleccionada"));
     mark.connect_clicked(glib::clone!(#[strong] points,#[strong] model,#[strong] version,#[strong] selected,#[strong] selected_point,#[weak] kind,#[weak] intensity,#[weak] area,#[weak] summary,#[weak] status,move|_|{
-        if version.get()==0{status.set_text("Este registro usa el mapa anterior. Inicia un nuevo registro para usar las zonas SVG.");return;}
-        if let Some(i)=selected.get(){let shape=&model.shapes[i];let mut ps=points.borrow_mut();ps.push(Point{x:shape.center.0,y:shape.center.1,back:shape.region.back,kind:kind.selected() as usize,intensity:Some(intensity.value() as u8),region_id:Some(shape.region.id)});selected_point.set(Some(ps.len()-1));summarize(&summary,&ps,&model,version.get());area.queue_draw();}else{status.set_text("Primero selecciona una zona por su nombre o en el dibujo.");}
+        if version.get()==0{status.set_text(&crate::i18n::tr("Este registro usa el mapa anterior. Inicia un nuevo registro para usar las zonas detalladas."));return;}
+        if let Some(i)=selected.get(){let shape=&model.shapes[i];let mut ps=points.borrow_mut();ps.push(Point{x:shape.center.0,y:shape.center.1,back:shape.region.back,kind:kind.selected() as usize,intensity:Some(intensity.value() as u8),region_id:Some(shape.region.id)});selected_point.set(Some(ps.len()-1));summarize(&summary,&ps,&model,version.get());area.queue_draw();}else{status.set_text(&crate::i18n::tr("Primero selecciona una zona por su nombre o en el dibujo."));}
     }));
     root.append(&mark);
-    let apply = Button::with_label("Aplicar sensación e intensidad al punto seleccionado");
+    let apply = Button::with_label(&crate::i18n::tr(
+        "Aplicar sensación e intensidad al punto seleccionado",
+    ));
     apply.connect_clicked(glib::clone!(
         #[strong]
         points,
@@ -693,7 +734,7 @@ pub fn build() -> gtk::ScrolledWindow {
         }
     ));
     root.append(&apply);
-    let delete = Button::with_label("Eliminar punto seleccionado");
+    let delete = Button::with_label(&crate::i18n::tr("Eliminar punto seleccionado"));
     delete.connect_clicked(glib::clone!(
         #[strong]
         points,
@@ -722,7 +763,7 @@ pub fn build() -> gtk::ScrolledWindow {
     ));
     root.append(&delete);
     root.append(&summary);
-    let clear = Button::with_label("Nuevo registro · limpiar mapa");
+    let clear = Button::with_label(&crate::i18n::tr("Nuevo registro · limpiar mapa"));
     clear.connect_clicked(glib::clone!(
         #[strong]
         points,
@@ -750,7 +791,9 @@ pub fn build() -> gtk::ScrolledWindow {
             area.set_content_height(600);
             describe(&zone, &model, None);
             summarize(&summary, &points.borrow(), &model, 1);
-            status.set_text("Nuevo registro en el mapa SVG. El historial se conserva.");
+            status.set_text(&crate::i18n::tr(
+                "Nuevo registro corporal. El historial se conserva.",
+            ));
             area.queue_draw();
         }
     ));
@@ -777,15 +820,94 @@ pub fn build() -> gtk::ScrolledWindow {
     selector.connect_selected_notify(glib::clone!(#[strong] history,#[strong] points,#[strong] version,#[strong] selected,#[strong] selected_point,#[strong] model,#[weak] area,#[weak] summary,#[weak] zone,#[weak] status,#[weak] moment,move|dd|{
         if let Some(s)=history.borrow().get(dd.selected() as usize){
             *points.borrow_mut()=s.points.clone();version.set(s.map_version);moment.set_selected(match s.moment.as_str(){"before"=>1,"after"=>2,_=>0});selected.set(None);selected_point.set(None);area.set_content_height(if s.map_version==0{430}else{600});describe(&zone,&model,None);summarize(&summary,&points.borrow(),&model,version.get());
-            status.set_text(if s.map_version==0{"Registro anterior: se muestra la silueta original para conservar la ubicación de tus puntos."}else{"Registro SVG cargado. Guardar crea una entrada nueva."});area.queue_draw();
+            status.set_text(&crate::i18n::tr(if s.map_version==0{"Registro anterior: se muestra la silueta original para conservar la ubicación de tus puntos."}else{"Registro corporal cargado. Guardar crea una entrada nueva."}));area.queue_draw();
         }
     }));
     let evolution = crate::body_evolution::build(history.clone(), model.clone());
     let refresh_evolution = evolution.refresh.clone();
+    let baseline = Rc::new(RefCell::new((
+        points.borrow().clone(),
+        version.get(),
+        moment.selected(),
+    )));
+    let flush: Rc<dyn Fn() -> Result<(), String>> = Rc::new(glib::clone!(
+        #[strong]
+        points,
+        #[strong]
+        version,
+        #[strong]
+        baseline,
+        #[strong]
+        repo,
+        #[strong]
+        linked,
+        #[weak]
+        moment,
+        #[weak]
+        status,
+        #[upgrade_or]
+        Err("El editor del mapa ya está cerrado".into()),
+        move || {
+            let signature = (points.borrow().clone(), version.get(), moment.selected());
+            if *baseline.borrow() == signature {
+                return Ok(());
+            }
+            let snapshot = Snapshot {
+                date: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                points: signature.0.clone(),
+                map_version: signature.1,
+                moment: match signature.2 {
+                    1 => "before",
+                    2 => "after",
+                    _ => "general",
+                }
+                .into(),
+                session_id: linked.as_ref().map(|l| l.session_id.clone()),
+            };
+            let result = if let Some(link) = &linked {
+                (link.save)(snapshot)
+            } else {
+                repo.update(|data| {
+                    data.body_draft = Some(snapshot);
+                    Ok(())
+                })
+            };
+            match &result {
+                Ok(()) => {
+                    *baseline.borrow_mut() = signature;
+                    status.set_text(&crate::i18n::tr(
+                        "Borrador del mapa guardado en este equipo.",
+                    ));
+                }
+                Err(e) => status.set_text(&crate::i18n::tr(&format!(
+                    "No se pudo guardar el borrador. Tus puntos siguen aquí: {e}"
+                ))),
+            }
+            result
+        }
+    ));
+    let weak_area = area.downgrade();
+    glib::timeout_add_local(
+        std::time::Duration::from_millis(600),
+        glib::clone!(
+            #[strong]
+            flush,
+            move || {
+                if weak_area.upgrade().is_none() {
+                    return glib::ControlFlow::Break;
+                }
+                let _ = flush();
+                glib::ControlFlow::Continue
+            }
+        ),
+    );
     let save = Button::builder()
-        .label("Guardar registro corporal")
+        .label(crate::i18n::tr(if linked.is_some() {
+            "Guardar mapa en el borrador"
+        } else {
+            "Guardar registro corporal"
+        }))
         .css_classes(["suggested-action"])
-        .sensitive(load_error.is_none())
         .build();
     save.connect_clicked(glib::clone!(
         #[strong]
@@ -798,6 +920,14 @@ pub fn build() -> gtk::ScrolledWindow {
         dates,
         #[strong]
         refresh_evolution,
+        #[strong]
+        baseline,
+        #[strong]
+        repo,
+        #[strong]
+        linked,
+        #[strong]
+        on_changed,
         #[weak]
         moment,
         #[weak]
@@ -809,6 +939,7 @@ pub fn build() -> gtk::ScrolledWindow {
                 date: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
                 points: points.borrow().clone(),
                 map_version: version.get(),
+                session_id: linked.as_ref().map(|l| l.session_id.clone()),
                 moment: match moment.selected() {
                     1 => "before",
                     2 => "after",
@@ -816,45 +947,78 @@ pub fn build() -> gtk::ScrolledWindow {
                 }
                 .into(),
             };
-            let mut next = history.borrow().clone();
-            next.push(snapshot.clone());
-            match persist(&next) {
+            let result = if let Some(link) = &linked {
+                (link.save)(snapshot.clone())
+            } else {
+                repo.update(|data| {
+                    data.body.push(snapshot.clone());
+                    data.body_draft = None;
+                    Ok(())
+                })
+            };
+            match result {
                 Ok(()) => {
-                    *history.borrow_mut() = next;
-                    dates.append(&snapshot.date);
-                    let index = history.borrow().len() as u32 - 1;
-                    selector.set_selected(index);
-                    status.set_text("Registro guardado. Elige una fecha para comparar tus mapas.");
-                    refresh_evolution();
+                    *baseline.borrow_mut() = (
+                        snapshot.points.clone(),
+                        snapshot.map_version,
+                        moment.selected(),
+                    );
+                    if linked.is_none() {
+                        history.borrow_mut().push(snapshot.clone());
+                        dates.append(&snapshot.date);
+                        let index = history.borrow().len() as u32 - 1;
+                        selector.set_selected(index);
+                        refresh_evolution();
+                    }
+                    status.set_text(&crate::i18n::tr(if linked.is_some() {
+                        "Mapa guardado en el borrador de la sesión."
+                    } else {
+                        "Registro corporal guardado."
+                    }));
+                    on_changed();
                 }
-                Err(e) => status.set_text(&format!("No se pudo guardar: {e}")),
+                Err(e) => status.set_text(&crate::i18n::tr(&format!(
+                    "No se pudo guardar. Tus puntos siguen aquí: {e}"
+                ))),
             }
         }
     ));
     root.append(&save);
     root.append(&status);
-    root.append(&Label::new(Some(
-        "Historial corporal · selecciona un registro para verlo",
-    )));
-    root.append(&selector);
-    let stack = gtk::Stack::new();
-    stack.set_vhomogeneous(false);
-    stack.add_titled(&root, Some("registrar"), "Registrar");
-    stack.add_titled(&evolution.widget, Some("evolucion"), "Evolución");
-    let switcher = gtk::StackSwitcher::builder()
-        .stack(&stack)
-        .halign(gtk::Align::Center)
-        .build();
-    let content = Box::builder()
-        .orientation(Orientation::Vertical)
-        .spacing(12)
-        .build();
-    content.append(&switcher);
-    content.append(&stack);
-    gtk::ScrolledWindow::builder()
-        .child(&content)
-        .vexpand(true)
-        .build()
+    let widget = if linked.is_some() {
+        gtk::ScrolledWindow::builder()
+            .child(&root)
+            .vexpand(true)
+            .build()
+    } else {
+        root.append(&Label::new(Some(
+            "Historial corporal · selecciona un registro para verlo",
+        )));
+        root.append(&selector);
+        let stack = gtk::Stack::new();
+        stack.set_vhomogeneous(false);
+        stack.add_titled(&root, Some("registrar"), &crate::i18n::tr("Registrar"));
+        stack.add_titled(
+            &evolution.widget,
+            Some("evolucion"),
+            &crate::i18n::tr("Evolución"),
+        );
+        let switcher = gtk::StackSwitcher::builder()
+            .stack(&stack)
+            .halign(gtk::Align::Center)
+            .build();
+        let content = Box::builder()
+            .orientation(Orientation::Vertical)
+            .spacing(12)
+            .build();
+        content.append(&switcher);
+        content.append(&stack);
+        gtk::ScrolledWindow::builder()
+            .child(&content)
+            .vexpand(true)
+            .build()
+    };
+    Panel { widget, flush }
 }
 #[cfg(test)]
 mod tests {
@@ -878,6 +1042,7 @@ mod tests {
             date: "2026-10-27".into(),
             map_version: 1,
             moment: "before".into(),
+            session_id: None,
             points: vec![Point {
                 x: 0.5,
                 y: 0.3,

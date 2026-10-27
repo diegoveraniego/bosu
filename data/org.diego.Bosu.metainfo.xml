@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.diego.Bosu</id>
+  <name>Bosu</name>
+  <summary>Follow your rehabilitation at your own pace</summary>
+  <summary xml:lang="es">Acompaña tu rehabilitación a tu ritmo</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.diegoveraniego"><name>diegoveraniego</name></developer>
+  <description>
+    <p>Bosu is a private, local rehabilitation journal for the GNOME desktop. Record complete or partial sessions, rest, and how your body feels.</p>
+    <p>Mark sensations on a body map, compare reported intensity over time, and export an animation to review your records. Your notes and routines stay on your device.</p>
+    <ul><li>Partial sessions and rest are part of your process.</li><li>Link before and after body maps to a session.</li><li>Recover drafts and export complete backups.</li><li>Keep pain and effort as separate, optional measurements.</li></ul>
+  </description>
+  <launchable type="desktop-id">org.diego.Bosu.desktop</launchable>
+  <url type="homepage">https://github.com/diegoveraniego/bosu</url>
+  <url type="bugtracker">https://github.com/diegoveraniego/bosu/issues</url>
+  <url type="vcs-browser">https://github.com/diegoveraniego/bosu</url>
+  <content_rating type="oars-1.1"/>
+  <supports><control>pointing</control><control>keyboard</control><control>touch</control></supports>
+  <releases><release version="0.2.0" date="2026-10-27"><description><p>Reliable local storage, partial sessions, linked body maps, draft recovery and GNOME integration.</p></description></release></releases>
+</component>

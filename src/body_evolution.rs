@@ -54,21 +54,21 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
         .build();
     root.append(
         &Label::builder()
-            .label("Evolución corporal")
+            .label(crate::i18n::tr("Evolución corporal"))
             .css_classes(["title-2"])
             .build(),
     );
-    root.append(&Label::builder().label("Recorre tus registros o reprodúcelos como una animación. La escala 0–10 es la misma en todas las fechas. Zona sin marcar = sin datos, no ausencia de dolor; ? = intensidad sin registrar.").wrap(true).build());
-    let kind = DropDown::from_strings(&KINDS);
+    root.append(&Label::builder().label(crate::i18n::tr("Recorre tus registros o reprodúcelos como una animación. La escala 0–10 es la misma en todas las fechas. Zona sin marcar = sin datos, no ausencia de dolor; ? = intensidad sin registrar.")).wrap(true).build());
+    let kind = crate::i18n::dropdown(&KINDS);
     root.append(&kind);
-    let range = DropDown::from_strings(&[
+    let range = crate::i18n::dropdown(&[
         "Todo el historial",
         "Últimos 7 días",
         "Últimos 30 días",
         "Últimos 90 días",
     ]);
     root.append(&range);
-    let moment = DropDown::from_strings(&[
+    let moment = crate::i18n::dropdown(&[
         "Todos los momentos",
         "Registro general",
         "Antes de la sesión",
@@ -114,26 +114,28 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
     let timeline = Scale::with_range(Orientation::Horizontal, 0., 1., 1.);
     timeline.set_draw_value(false);
     timeline.set_digits(0);
-    timeline.update_property(&[gtk::accessible::Property::Label("Registro del historial")]);
+    timeline.update_property(&[gtk::accessible::Property::Label(&crate::i18n::tr(
+        "Registro del historial",
+    ))]);
     root.append(&timeline);
     let controls = Box::builder()
         .orientation(Orientation::Horizontal)
         .spacing(8)
         .halign(gtk::Align::Center)
         .build();
-    let previous = Button::with_label("Anterior");
-    let play = gtk::ToggleButton::with_label("Reproducir");
-    let next = Button::with_label("Siguiente");
+    let previous = Button::with_label(&crate::i18n::tr("Anterior"));
+    let play = gtk::ToggleButton::with_label(&crate::i18n::tr("Reproducir"));
+    let next = Button::with_label(&crate::i18n::tr("Siguiente"));
     controls.append(&previous);
     controls.append(&play);
     controls.append(&next);
     root.append(&controls);
-    let mut names = vec!["Máximo de todas las zonas".into()];
+    let mut names = vec![crate::i18n::tr("Máximo de todas las zonas")];
     names.extend(model.shapes.iter().map(|s| {
         format!(
             "{} · {}",
-            s.region.name,
-            if s.region.back { "espalda" } else { "frente" }
+            crate::i18n::tr(&s.region.name),
+            crate::i18n::tr(if s.region.back { "espalda" } else { "frente" })
         )
     }));
     let region = DropDown::from_strings(&names.iter().map(|s| s.as_str()).collect::<Vec<_>>());
@@ -209,7 +211,19 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
         }
     ));
     root.append(&chart);
-    root.append(&Label::builder().label("Un punto por registro, de más antiguo a más reciente. Los huecos indican intensidad sin registrar. Si hay varios puntos de la misma sensación en una zona se usa el máximo.").wrap(true).build());
+    let chart_values = Label::builder()
+        .wrap(true)
+        .selectable(true)
+        .xalign(0.)
+        .build();
+    let accessible = adw::ExpanderRow::builder()
+        .title(crate::i18n::tr("Ver valores del gráfico"))
+        .build();
+    accessible.add_row(&chart_values);
+    let accessible_group = adw::PreferencesGroup::new();
+    accessible_group.add(&accessible);
+    root.append(&accessible_group);
+    root.append(&Label::builder().label(crate::i18n::tr("Un punto por registro, de más antiguo a más reciente. Los huecos indican intensidad sin registrar. Si hay varios puntos de la misma sensación en una zona se usa el máximo.")).wrap(true).build());
     let update: Rc<dyn Fn()> = Rc::new(glib::clone!(
         #[strong]
         visible,
@@ -223,23 +237,66 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
         chart,
         #[weak]
         detail,
+        #[weak]
+        region,
+        #[weak]
+        chart_values,
+        #[weak]
+        timeline,
+        #[strong]
+        model,
         move || {
+            let chosen = region
+                .selected()
+                .checked_sub(1)
+                .and_then(|i| model.shapes.get(i as usize));
+            let selected_region = chosen.map(|shape| shape.region.id);
+            let context = chosen
+                .map(|shape| crate::i18n::tr(&shape.region.name))
+                .unwrap_or_else(|| crate::i18n::tr("Máximo de todas las zonas"));
+            let lines: Vec<_> = visible
+                .borrow()
+                .iter()
+                .rev()
+                .take(10)
+                .map(|s| {
+                    format!(
+                        "{}: {}",
+                        s.date,
+                        maximum(s, kind.selected() as usize, selected_region)
+                            .map(|v| format!("{v}/10"))
+                            .unwrap_or_else(|| crate::i18n::tr("sin intensidad registrada"))
+                    )
+                })
+                .collect();
+            let values = format!(
+                "{}\n{}",
+                context,
+                lines.into_iter().rev().collect::<Vec<_>>().join("\n")
+            );
+            chart_values.set_text(&values);
+            chart.update_property(&[
+                gtk::accessible::Property::Label(&context),
+                gtk::accessible::Property::Description(&values),
+            ]);
+
             if let Some(s) = visible.borrow().get(index.get()) {
                 let count = visible.borrow().len();
-                let max = maximum(s, kind.selected() as usize, None)
+                let max = maximum(s, kind.selected() as usize, selected_region)
                     .map(|n| format!("{n}/10"))
-                    .unwrap_or("sin intensidad registrada".into());
-                detail.set_text(&format!(
+                    .unwrap_or_else(|| crate::i18n::tr("sin intensidad registrada"));
+                timeline.update_property(&[gtk::accessible::Property::ValueText(&s.date)]);
+                detail.set_text(&crate::i18n::tr(&format!(
                     "Registro {}/{} · {} · {}\n{}: máximo {}",
                     index.get() + 1,
                     count,
                     s.date,
                     body_gif::moment_label(&s.moment),
-                    KINDS[kind.selected() as usize],
+                    crate::i18n::tr(KINDS[kind.selected() as usize]),
                     max
-                ));
+                )));
             } else {
-                detail.set_text("No hay registros SVG en este período. Guarda un mapa con intensidad para comenzar.");
+                detail.set_text(&crate::i18n::tr("No hay registros corporales en este período. Guarda un mapa con intensidad para comenzar."));
             }
             area.queue_draw();
             chart.queue_draw();
@@ -272,11 +329,11 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
         )
     ));
     play.connect_toggled(|b| {
-        b.set_label(if b.is_active() {
+        b.set_label(&crate::i18n::tr(if b.is_active() {
             "Pausar"
         } else {
             "Reproducir"
-        })
+        }))
     });
     let weak_timeline = timeline.downgrade();
     let weak_play = play.downgrade();
@@ -313,7 +370,7 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
         move |_| update()
     ));
     let export_busy = Rc::new(Cell::new(false));
-    let export = Button::with_label("Exportar animación GIF…");
+    let export = Button::with_label(&crate::i18n::tr("Exportar animación GIF…"));
     root.append(&export);
     let export_status = Label::builder().wrap(true).build();
     root.append(&export_status);
@@ -333,12 +390,12 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
             let export_busy = export_busy.clone();
             let snapshots = visible.borrow().clone();
             if snapshots.is_empty() {
-                export_status.set_text("No hay registros para exportar.");
+                export_status.set_text(&crate::i18n::tr("No hay registros para exportar."));
                 return;
             }
             let selected_kind = kind.selected() as usize;
             let dialog = gtk::FileDialog::builder()
-                .title("Guardar evolución corporal")
+                .title(crate::i18n::tr("Guardar evolución corporal"))
                 .initial_name("bosu-evolucion.gif")
                 .build();
             let parent = button.root().and_downcast::<gtk::Window>();
@@ -353,18 +410,25 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
                         Err(_) => return,
                     };
                     let Some(path) = file.path() else {
-                        status.set_text("Elige una carpeta local para guardar el GIF.");
+                        status.set_text(&crate::i18n::tr(
+                            "Elige una carpeta local para guardar el GIF.",
+                        ));
                         return;
                     };
                     if export_busy.replace(true) {
                         return;
                     }
                     button.set_sensitive(false);
-                    status.set_text("Exportando animación…");
+                    status.set_text(&crate::i18n::tr("Exportando animación…"));
                     let (sender, receiver) = std::sync::mpsc::channel();
+                    let uri = file.uri().to_string();
                     std::thread::spawn(move || {
-                        let result =
-                            body_gif::export(&path, &snapshots, selected_kind).map(|_| path);
+                        let result = body_gif::export_file(
+                            &gtk::gio::File::for_uri(&uri),
+                            &snapshots,
+                            selected_kind,
+                        )
+                        .map(|_| path);
                         let _ = sender.send(result);
                     });
                     let weak_button = button.downgrade();
@@ -380,9 +444,13 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
                                 export_busy.set(false);
                                 button.set_sensitive(true);
                                 match result {
-                                    Ok(path) => status
-                                        .set_text(&format!("GIF guardado en {}", path.display())),
-                                    Err(e) => status.set_text(&format!("No se pudo exportar: {e}")),
+                                    Ok(path) => status.set_text(&crate::i18n::tr(&format!(
+                                        "GIF guardado en {}",
+                                        path.display()
+                                    ))),
+                                    Err(e) => status.set_text(&crate::i18n::tr(&format!(
+                                        "No se pudo exportar: {e}"
+                                    ))),
                                 };
                                 glib::ControlFlow::Break
                             }
@@ -392,7 +460,7 @@ pub fn build(history: Rc<RefCell<Vec<Snapshot>>>, model: Rc<Model>) -> Panel {
                             Err(_) => {
                                 export_busy.set(false);
                                 button.set_sensitive(true);
-                                status.set_text("La exportación se interrumpió.");
+                                status.set_text(&crate::i18n::tr("La exportación se interrumpió."));
                                 glib::ControlFlow::Break
                             }
                         }

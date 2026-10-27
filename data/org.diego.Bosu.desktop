@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Bosu
+Comment=Understand your body and follow your recovery at your own pace
+Comment[es]=Entiende tu cuerpo y acompaña tu recuperación a tu ritmo
+Exec=bosu
+Icon=org.diego.Bosu
+Terminal=false
+Categories=Utility;
+Keywords=rehabilitation;physiotherapy;body;pain;exercise;
+Keywords[es]=rehabilitación;kinesiología;cuerpo;dolor;ejercicio;
+StartupNotify=true
+DBusActivatable=true

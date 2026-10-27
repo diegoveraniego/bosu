@@ -1,0 +1,1177 @@
+# Bosu English interface messages. Exercise names and personal notes are not translated.
+msgid ""
+msgstr "Project-Id-Version: Bosu 0.2.0\nReport-Msgid-Bugs-To: https://github.com/diegoveraniego/bosu/issues\nPOT-Creation-Date: 2026-10-27 00:00+0000\nPO-Revision-Date: 2026-10-27 00:00+0000\nLast-Translator: Bosu contributors\nLanguage-Team: English\nLanguage: en\nMIME-Version: 1.0\nContent-Type: text/plain; charset=UTF-8\nContent-Transfer-Encoding: 8bit\nPlural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "0 a 10 · ? sin intensidad"
+msgstr "0 to 10 · ? no intensity recorded"
+
+msgid "1 · Cómo estoy"
+msgstr "1 · How I feel"
+
+msgid "2 · Lo que hice"
+msgstr "2 · What I did"
+
+msgid "3 · Cómo quedé"
+msgstr "3 · How I feel afterwards"
+
+msgid "<span foreground='#e63333'>● Dolor</span>   <span foreground='#f2a619'>● Tensión</span>   <span foreground='#8059d9'>● Cansancio</span>\n<span foreground='#e64d99'>● Irritado</span>   <span foreground='#2699e6'>● Trabajado</span>   <span foreground='#33b366'>● Fuerte</span>"
+msgstr "<span foreground='#e63333'>● Pain</span>   <span foreground='#f2a619'>● Tension</span>   <span foreground='#8059d9'>● Fatigue</span>\n<span foreground='#e64d99'>● Irritation</span>   <span foreground='#2699e6'>● Worked</span>   <span foreground='#33b366'>● Strong</span>"
+
+msgid "Abdominales derechos"
+msgstr "Right abdominals · front view"
+
+msgid "Abdominales izquierdos"
+msgstr "Left abdominals · front view"
+
+msgid "Abrir carpeta"
+msgstr "Open folder"
+
+msgid "Abrir carpeta de datos"
+msgstr "Open data folder"
+
+msgid "Abrir datos"
+msgstr "Open Data"
+
+msgid "Acerca de Bosu"
+msgstr "About Bosu"
+
+msgid "Acompañamiento"
+msgstr "Support"
+
+msgid "Aductor derecho"
+msgstr "Right adductors · front view"
+
+msgid "Aductor izquierdo"
+msgstr "Left adductors · front view"
+
+msgid "Agregar Ejercicio"
+msgstr "Add Exercise"
+
+msgid "Agregar Nueva Rutina"
+msgstr "Add New Routine"
+
+msgid "Agregar Sección"
+msgstr "Add Section"
+
+msgid "Antebrazo derecho · vista frontal (flexores)"
+msgstr "Right forearm · front view"
+
+msgid "Antebrazo derecho · vista posterior (extensores)"
+msgstr "Right forearm · back view"
+
+msgid "Antebrazo izquierdo · vista frontal (flexores)"
+msgstr "Left forearm · front view"
+
+msgid "Antebrazo izquierdo · vista posterior (extensores)"
+msgstr "Left forearm · back view"
+
+msgid "Anterior"
+msgstr "Previous"
+
+msgid "Antes de la sesión"
+msgstr "Before the session"
+
+msgid "Aplicar sensación e intensidad al punto seleccionado"
+msgstr "Apply sensation and intensity to selected point"
+
+msgid "Articulación entre el antebrazo y la mano. Lado derecho de tu cuerpo."
+msgstr "Joint between the forearm and hand. Right side of your body."
+
+msgid "Articulación entre el antebrazo y la mano. Lado izquierdo de tu cuerpo."
+msgstr "Joint between the forearm and hand. Left side of your body."
+
+msgid "Articulación entre la pierna y el pie. Lado derecho de tu cuerpo."
+msgstr "Joint between the leg and foot. Right side of your body."
+
+msgid "Articulación entre la pierna y el pie. Lado izquierdo de tu cuerpo."
+msgstr "Joint between the leg and foot. Left side of your body."
+
+msgid "Atajos de teclado"
+msgstr "Keyboard Shortcuts"
+
+msgid "Borrador del mapa guardado en este equipo."
+msgstr "Map draft saved on this device."
+
+msgid "Borrador guardado en este equipo."
+msgstr "Draft saved on this device."
+
+msgid "Borrador recuperado"
+msgstr "Recovered Draft"
+
+msgid "Borrador recuperado. Puedes continuar donde lo dejaste."
+msgstr "Draft recovered. You can pick up where you left off."
+
+msgid "Bosu"
+msgstr "Bosu"
+
+msgid "Bíceps derecho"
+msgstr "Right biceps · front view"
+
+msgid "Bíceps izquierdo"
+msgstr "Left biceps · front view"
+
+msgid "Cabeza · vista frontal"
+msgstr "Head · front view"
+
+msgid "Cabeza · vista posterior"
+msgstr "Head · back view"
+
+msgid "Cada celda resume todos los registros de ese día."
+msgstr "Each cell summarizes all records for that day."
+
+msgid "Cadera derecha"
+msgstr "Right hip · front view"
+
+msgid "Cadera izquierda"
+msgstr "Left hip · front view"
+
+msgid "Cancelar"
+msgstr "Cancel"
+
+msgid "Cansancio"
+msgstr "Fatigue"
+
+msgid "Cara interna del muslo, sobre los aductores. Lado derecho de tu cuerpo."
+msgstr "Inner thigh, over the adductor muscles. Right side of your body."
+
+msgid "Cara interna del muslo, sobre los aductores. Lado izquierdo de tu cuerpo."
+msgstr "Inner thigh, over the adductor muscles. Left side of your body."
+
+msgid "Cerrar Bosu"
+msgstr "Close Bosu"
+
+msgid "Cerrar sin guardar en disco"
+msgstr "Close Without Saving to Disk"
+
+msgid "Codo derecho · vista frontal"
+msgstr "Right elbow · front view"
+
+msgid "Codo derecho · vista posterior"
+msgstr "Right elbow · back view"
+
+msgid "Codo izquierdo · vista frontal"
+msgstr "Left elbow · front view"
+
+msgid "Codo izquierdo · vista posterior"
+msgstr "Left elbow · back view"
+
+msgid "Columna vertebral"
+msgstr "Spinal column · back view"
+
+msgid "Contiene {} sesiones, {} mapas independientes y {} borradores. Reemplazará tus datos actuales. Antes se guardará un respaldo de seguridad automático."
+msgstr "Contains {} sessions, {} standalone maps and {} drafts. It will replace your current data. A safety backup will be saved first."
+
+msgid "Costado de la espalda, debajo de la región escapular. Lado derecho de tu cuerpo."
+msgstr "Side of the back, below the scapular region. Right side of your body."
+
+msgid "Costado de la espalda, debajo de la región escapular. Lado izquierdo de tu cuerpo."
+msgstr "Side of the back, below the scapular region. Left side of your body."
+
+msgid "Costado del abdomen, sobre los músculos oblicuos. Lado derecho de tu cuerpo."
+msgstr "Side of the abdomen, over the oblique muscles. Right side of your body."
+
+msgid "Costado del abdomen, sobre los músculos oblicuos. Lado izquierdo de tu cuerpo."
+msgstr "Side of the abdomen, over the oblique muscles. Left side of your body."
+
+msgid "Costilla derecha"
+msgstr "Right rib region · front view"
+
+msgid "Costilla izquierda"
+msgstr "Left rib region · front view"
+
+msgid "Cuello (Der.)"
+msgstr "Right neck · front view"
+
+msgid "Cuello (Izq.)"
+msgstr "Left neck · front view"
+
+msgid "Cuerpo"
+msgstr "Body"
+
+msgid "Cuádriceps derecho"
+msgstr "Right quadriceps · front view"
+
+msgid "Cuádriceps izquierdo"
+msgstr "Left quadriceps · front view"
+
+msgid "Cómo estoy · antes"
+msgstr "How I feel · before"
+
+msgid "Cómo quedé · después"
+msgstr "How I feel · after"
+
+msgid "Datos"
+msgstr "Data"
+
+msgid "Datos restaurados. Copia anterior: {}"
+msgstr "Data restored. Previous copy: {}"
+
+msgid "Descansar también forma parte de tu proceso."
+msgstr "Rest is part of your process too."
+
+msgid "Descanso"
+msgstr "Rest"
+
+msgid "Descanso o sensaciones"
+msgstr "Rest or Sensations"
+
+msgid "Descanso registrado."
+msgstr "Rest recorded."
+
+msgid "Descansos registrados"
+msgstr "Recorded Rest Days"
+
+msgid "Descartar borrador"
+msgstr "Discard Draft"
+
+msgid "Descartar borrador y empezar de nuevo"
+msgstr "Discard Draft and Start Again"
+
+msgid "Deshacer"
+msgstr "Undo"
+
+msgid "Deshacer última eliminación"
+msgstr "Undo Last Deletion"
+
+msgid "Después de la sesión"
+msgstr "After the session"
+
+msgid "Dolor"
+msgstr "Pain"
+
+msgid "Dolor registrado"
+msgstr "Recorded Pain"
+
+msgid "Dolor y esfuerzo deben estar entre 0 y 10"
+msgstr "Pain and effort must be between 0 and 10"
+
+msgid "Dolor y esfuerzo son registros distintos. Puedes dejar cualquiera sin medir."
+msgstr "Pain and effort are separate measurements. Either can be left unrecorded."
+
+msgid "Dolor · 0 a 10"
+msgstr "Pain · 0 to 10"
+
+msgid "Días con actividad"
+msgstr "Active Days"
+
+msgid "Días con actividad, incluyendo sesiones parciales."
+msgstr "Active days, including partial sessions."
+
+msgid "Días de práctica de kine"
+msgstr "Rehabilitation Practice Days"
+
+msgid "Ejercicio {}"
+msgstr "Exercise {}"
+
+msgid "El borrador sigue abierto: {e}"
+msgstr "The draft is still open: {e}"
+
+msgid "El borrador todavía no está guardado"
+msgstr "Draft Is Not Saved Yet"
+
+msgid "El cambio se aplica al reiniciar. Los nombres de tus ejercicios y tus notas se conservan."
+msgstr "The change applies when you restart. Your exercise names and notes are preserved."
+
+msgid "El mapa es opcional y queda vinculado a esta sesión."
+msgstr "The map is optional and linked to this session."
+
+msgid "Elegir respaldo de Bosu"
+msgstr "Choose a Bosu Backup"
+
+msgid "Elige una carpeta local para guardar el GIF."
+msgstr "Choose a local folder to save the GIF."
+
+msgid "Elige una sensación y toca una zona para crear un punto. Arrastra para moverlo; selecciona un punto para editar su sensación e intensidad."
+msgstr "Choose a sensation and tap a region to add a point. Drag to move it; select a point to edit its sensation and intensity."
+
+msgid "Eliminar Ejercicio"
+msgstr "Delete Exercise"
+
+msgid "Eliminar Rutina"
+msgstr "Delete Routine"
+
+msgid "Eliminar Sección"
+msgstr "Delete Section"
+
+msgid "Eliminar punto seleccionado"
+msgstr "Delete Selected Point"
+
+msgid "Eliminar registro · se puede deshacer"
+msgstr "Delete record · undo available"
+
+msgid "Eliminar una sesión también elimina sus mapas vinculados. Deshacer restaura el conjunto."
+msgstr "Deleting a session also removes its linked maps. Undo restores them together."
+
+msgid "English"
+msgstr "English"
+
+msgid "Entender cómo responde tu cuerpo y acompañar tu proceso, a tu ritmo."
+msgstr "Understand how your body responds and follow your process at your own pace."
+
+msgid "Esa eliminación ya no es la última. No se modificó ningún registro."
+msgstr "That is no longer the most recent deletion. No records were changed."
+
+msgid "Esfuerzo registrado"
+msgstr "Recorded Effort"
+
+msgid "Esfuerzo · 0 a 10"
+msgstr "Effort · 0 to 10"
+
+msgid "Espalda"
+msgstr "Back"
+
+msgid "Espalda (Lado derecho)"
+msgstr "Right back flank · back view"
+
+msgid "Espalda (Lado izquierdo)"
+msgstr "Left back flank · back view"
+
+msgid "Español"
+msgstr "Español"
+
+msgid "Espinilla derecha"
+msgstr "Right shin · front view"
+
+msgid "Espinilla izquierda"
+msgstr "Left shin · front view"
+
+msgid "Esta semana · días de práctica"
+msgstr "This week · practice days"
+
+msgid "Estado de {}"
+msgstr "Status of {}"
+
+msgid "Este registro usa el mapa anterior. Inicia un nuevo registro para usar las zonas detalladas."
+msgstr "This record uses the previous map. Start a new record to use the detailed regions."
+
+msgid "Evolución"
+msgstr "Evolution"
+
+msgid "Evolución corporal"
+msgstr "Body Changes Over Time"
+
+msgid "Exportando animación…"
+msgstr "Exporting animation…"
+
+msgid "Exportar animación GIF…"
+msgstr "Export GIF Animation…"
+
+msgid "Fecha · AAAA-MM-DD"
+msgstr "Date · YYYY-MM-DD"
+
+msgid "Frente"
+msgstr "Front"
+
+msgid "Fuerte"
+msgstr "Strong"
+
+msgid "GIF guardado en {}"
+msgstr "GIF saved to {}"
+
+msgid "Glúteo derecho"
+msgstr "Right buttock · back view"
+
+msgid "Glúteo izquierdo"
+msgstr "Left buttock · back view"
+
+msgid "Gris: sin datos · un cuadro por registro"
+msgstr "Gray: no data · one frame per record"
+
+msgid "Gráfico de intensidad máxima por registro"
+msgstr "Maximum Intensity by Record"
+
+msgid "Guardar descanso"
+msgstr "Save Rest"
+
+msgid "Guardar evolución corporal"
+msgstr "Save Body Changes"
+
+msgid "Guardar mapa en el borrador"
+msgstr "Save Map to Draft"
+
+msgid "Guardar mi avance"
+msgstr "Save My Progress"
+
+msgid "Guardar preferencias"
+msgstr "Save Preferences"
+
+msgid "Guardar registro corporal"
+msgstr "Save Body Record"
+
+msgid "Guardar respaldo completo"
+msgstr "Save Complete Backup"
+
+msgid "Guardar respaldo…"
+msgstr "Save Backup…"
+
+msgid "Heatmap de frente y espalda del registro seleccionado"
+msgstr "Front and back heatmap for the selected record"
+
+msgid "Hecho"
+msgstr "Done"
+
+msgid "Historial"
+msgstr "History"
+
+msgid "Historial corporal · selecciona un registro para verlo"
+msgstr "Body History · Choose a Record to View"
+
+msgid "Hombro derecho · vista frontal"
+msgstr "Right shoulder · front view"
+
+msgid "Hombro derecho · vista posterior"
+msgstr "Right shoulder · back view"
+
+msgid "Hombro izquierdo · vista frontal"
+msgstr "Left shoulder · front view"
+
+msgid "Hombro izquierdo · vista posterior"
+msgstr "Left shoulder · back view"
+
+msgid "Hora"
+msgstr "Hour"
+
+msgid "Hoy"
+msgstr "Today"
+
+msgid "Hoy, a tu ritmo"
+msgstr "Today, at your pace"
+
+msgid "Idioma"
+msgstr "Language"
+
+msgid "Idioma de la interfaz"
+msgstr "Interface language"
+
+msgid "Idioma del sistema"
+msgstr "System language"
+
+msgid "Ilustración corporal"
+msgstr "Body Illustration"
+
+msgid "Intensidad de la sensación de 0 a 10"
+msgstr "Sensation intensity from 0 to 10"
+
+msgid "Intensidad · 0 a 10"
+msgstr "Intensity · 0 to 10"
+
+msgid "Irritado"
+msgstr "Irritation"
+
+msgid "Isquiotibiales derecho"
+msgstr "Right hamstrings · back view"
+
+msgid "Isquiotibiales izquierdo"
+msgstr "Left hamstrings · back view"
+
+msgid "La exportación se interrumpió."
+msgstr "Export was interrupted."
+
+msgid "La fecha debe tener el formato AAAA-MM-DD"
+msgstr "The date must use YYYY-MM-DD format"
+
+msgid "Las sesiones parciales cuentan como actividad. Los días sin registro quedan sin datos; descansar no borra tu avance."
+msgstr "Partial sessions count as activity. Days without records have no data; rest does not erase your progress."
+
+msgid "Listo"
+msgstr "Done"
+
+msgid "Lo que hice · repeticiones, peso o asistencia"
+msgstr "What I did · repetitions, weight or assistance"
+
+msgid "Los cambios se guardan como borrador en este equipo."
+msgstr "Changes are saved as a draft on this device."
+
+msgid "Lumbar derecho"
+msgstr "Right lumbar region · back view"
+
+msgid "Lumbar izquierdo"
+msgstr "Left lumbar region · back view"
+
+msgid "Línea central de la espalda, a lo largo de la columna vertebral. "
+msgstr "Center of the back, along the spine."
+
+msgid "Mano derecha · vista frontal (superficie palmar)"
+msgstr "Right hand · front view"
+
+msgid "Mano derecha · vista posterior (superficie dorsal)"
+msgstr "Right hand · back view"
+
+msgid "Mano izquierda · vista frontal (superficie palmar)"
+msgstr "Left hand · front view"
+
+msgid "Mano izquierda · vista posterior (superficie dorsal)"
+msgstr "Left hand · back view"
+
+msgid "Mapa antes de la sesión"
+msgstr "Map Before the Session"
+
+msgid "Mapa antes: {} · mapa después: {}"
+msgstr "Before map: {} · after map: {}"
+
+msgid "Mapa corporal con 73 zonas. También puedes elegir una zona por nombre."
+msgstr "Body map with 73 regions. You can also choose a region by name."
+
+msgid "Mapa después de la sesión"
+msgstr "Map After the Session"
+
+msgid "Mapa guardado en el borrador de la sesión."
+msgstr "Map saved to the session draft."
+
+msgid "Marcar zona seleccionada"
+msgstr "Mark Selected Region"
+
+msgid "Medición de una versión anterior"
+msgstr "Measurement From a Previous Version"
+
+msgid "Menú principal"
+msgstr "Main Menu"
+
+msgid "Meta compartida de kine (días de práctica)"
+msgstr "Shared rehabilitation goal (practice days)"
+
+msgid "Meta semanal (días de práctica)"
+msgstr "Weekly goal (practice days)"
+
+msgid "Mi cuerpo"
+msgstr "My Body"
+
+msgid "Minutos"
+msgstr "Minutes"
+
+msgid "Molestia/esfuerzo: {}. Se conserva el valor original; no se incluye en los promedios de dolor."
+msgstr "Discomfort/effort: {}. The original value is preserved and excluded from pain averages."
+
+msgid "Muñeca derecha · vista frontal"
+msgstr "Right wrist · front view"
+
+msgid "Muñeca derecha · vista posterior"
+msgstr "Right wrist · back view"
+
+msgid "Muñeca izquierda · vista frontal"
+msgstr "Left wrist · front view"
+
+msgid "Muñeca izquierda · vista posterior"
+msgstr "Left wrist · back view"
+
+msgid "Más tarde"
+msgstr "Later"
+
+msgid "Máximo de todas las zonas"
+msgstr "Maximum Across All Regions"
+
+msgid "No hay registros corporales en el período seleccionado"
+msgstr "There are no body records in the selected period"
+
+msgid "No hay registros corporales en este período. Guarda un mapa con intensidad para comenzar."
+msgstr "No body records in this period. Save a map with intensity to begin."
+
+msgid "No hay registros para exportar."
+msgstr "There are no records to export."
+
+msgid "No hay una eliminación para deshacer"
+msgstr "There is no deletion to undo"
+
+msgid "No se pudo abrir la carpeta: {e}"
+msgstr "Could not open folder: {e}"
+
+msgid "No se pudo cargar el mapa corporal: {e}"
+msgstr "Could not load body map: {e}"
+
+msgid "No se pudo descartar el borrador: {error}"
+msgstr "Could not discard draft: {error}"
+
+msgid "No se pudo eliminar: {e}"
+msgstr "Could not delete: {e}"
+
+msgid "No se pudo exportar: {e}"
+msgstr "Could not export: {e}"
+
+msgid "No se pudo guardar el borrador. Tus puntos siguen aquí: {e}"
+msgstr "Could not save the draft. Your points are still here: {e}"
+
+msgid "No se pudo guardar el borrador: {e}"
+msgstr "Could not save draft: {e}"
+
+msgid "No se pudo guardar el mapa"
+msgstr "Could Not Save Map"
+
+msgid "No se pudo guardar el respaldo: {e}"
+msgstr "Could not save backup: {e}"
+
+msgid "No se pudo guardar. Tu registro sigue aquí: {error}"
+msgstr "Could not save. Your record is still here: {error}"
+
+msgid "No se pudo guardar. Tus cambios siguen abiertos: {e}"
+msgstr "Could not save. Your changes are still open: {e}"
+
+msgid "No se pudo guardar. Tus puntos siguen aquí: {e}"
+msgstr "Could not save. Your points are still here: {e}"
+
+msgid "No se pudo leer el respaldo: {e}"
+msgstr "Could not read backup: {e}"
+
+msgid "No se pudo restaurar: {e}"
+msgstr "Could not restore: {e}"
+
+msgid "No se reemplazó ningún archivo.\n{error}"
+msgstr "No files were replaced.\n{error}"
+
+msgid "Nombre"
+msgstr "Name"
+
+msgid "Nombre de Sección"
+msgstr "Section Name"
+
+msgid "Nombre de la Rutina"
+msgstr "Routine Name"
+
+msgid "Nota o motivo de omisión · opcional"
+msgstr "Note or reason for skipping · optional"
+
+msgid "Notas"
+msgstr "Notes"
+
+msgid "Notas de la sesión · opcional"
+msgstr "Session Notes · optional"
+
+msgid "Nuevo registro corporal. El historial se conserva."
+msgstr "New body record. History is preserved."
+
+msgid "Nuevo registro · limpiar mapa"
+msgstr "New Record · Clear Map"
+
+msgid "Oblicuos derechos"
+msgstr "Right obliques · front view"
+
+msgid "Oblicuos izquierdos"
+msgstr "Left obliques · front view"
+
+msgid "Omitido"
+msgstr "Skipped"
+
+msgid "Opcionales y sin presión. Funcionan mientras Bosu está abierto; no se instala ningún servicio en segundo plano."
+msgstr "Optional and pressure-free. They work while Bosu is open; no background service is installed."
+
+msgid "Pantorrilla derecha"
+msgstr "Right calf · back view"
+
+msgid "Pantorrilla izquierda"
+msgstr "Left calf · back view"
+
+msgid "Parte anterior de la articulación del codo. Lado derecho de tu cuerpo."
+msgstr "Front of the elbow joint. Right side of your body."
+
+msgid "Parte anterior de la articulación del codo. Lado izquierdo de tu cuerpo."
+msgstr "Front of the elbow joint. Left side of your body."
+
+msgid "Parte anterior de la pierna, a lo largo de la tibia. Lado derecho de tu cuerpo."
+msgstr "Front of the lower leg, along the tibia. Right side of your body."
+
+msgid "Parte anterior de la pierna, a lo largo de la tibia. Lado izquierdo de tu cuerpo."
+msgstr "Front of the lower leg, along the tibia. Left side of your body."
+
+msgid "Parte anterior del brazo, sobre el bíceps. Lado derecho de tu cuerpo."
+msgstr "Front of the upper arm, over the biceps. Right side of your body."
+
+msgid "Parte anterior del brazo, sobre el bíceps. Lado izquierdo de tu cuerpo."
+msgstr "Front of the upper arm, over the biceps. Left side of your body."
+
+msgid "Parte anterior del muslo, sobre el cuádriceps. Lado derecho de tu cuerpo."
+msgstr "Front of the thigh, over the quadriceps. Right side of your body."
+
+msgid "Parte anterior del muslo, sobre el cuádriceps. Lado izquierdo de tu cuerpo."
+msgstr "Front of the thigh, over the quadriceps. Left side of your body."
+
+msgid "Parte anterior del pecho, sobre los músculos pectorales. Lado derecho de tu cuerpo."
+msgstr "Front of the chest, over the pectoral muscles. Right side of your body."
+
+msgid "Parte anterior del pecho, sobre los músculos pectorales. Lado izquierdo de tu cuerpo."
+msgstr "Front of the chest, over the pectoral muscles. Left side of your body."
+
+msgid "Parte baja de la espalda, entre las costillas y la pelvis. Lado derecho de tu cuerpo."
+msgstr "Lower back, between the ribs and pelvis. Right side of your body."
+
+msgid "Parte baja de la espalda, entre las costillas y la pelvis. Lado izquierdo de tu cuerpo."
+msgstr "Lower back, between the ribs and pelvis. Left side of your body."
+
+msgid "Parte posterior de la articulación del codo. Lado derecho de tu cuerpo."
+msgstr "Back of the elbow joint. Right side of your body."
+
+msgid "Parte posterior de la articulación del codo. Lado izquierdo de tu cuerpo."
+msgstr "Back of the elbow joint. Left side of your body."
+
+msgid "Parte posterior de la pierna, sobre la pantorrilla. Lado derecho de tu cuerpo."
+msgstr "Back of the lower leg, over the calf muscles. Right side of your body."
+
+msgid "Parte posterior de la pierna, sobre la pantorrilla. Lado izquierdo de tu cuerpo."
+msgstr "Back of the lower leg, over the calf muscles. Left side of your body."
+
+msgid "Parte posterior del brazo, sobre el tríceps. Lado derecho de tu cuerpo."
+msgstr "Back of the upper arm, over the triceps. Right side of your body."
+
+msgid "Parte posterior del brazo, sobre el tríceps. Lado izquierdo de tu cuerpo."
+msgstr "Back of the upper arm, over the triceps. Left side of your body."
+
+msgid "Parte posterior del muslo, sobre los isquiotibiales. Lado derecho de tu cuerpo."
+msgstr "Back of the thigh, over the hamstrings. Right side of your body."
+
+msgid "Parte posterior del muslo, sobre los isquiotibiales. Lado izquierdo de tu cuerpo."
+msgstr "Back of the thigh, over the hamstrings. Left side of your body."
+
+msgid "Parte superior de la espalda y base del cuello, sobre el trapecio. Lado derecho de tu cuerpo."
+msgstr "Upper back and base of the neck, over the trapezius. Right side of your body."
+
+msgid "Parte superior de la espalda y base del cuello, sobre el trapecio. Lado izquierdo de tu cuerpo."
+msgstr "Upper back and base of the neck, over the trapezius. Left side of your body."
+
+msgid "Pausar"
+msgstr "Pause"
+
+msgid "Pectoral derecho"
+msgstr "Right pectoral · front view"
+
+msgid "Pectoral izquierdo"
+msgstr "Left pectoral · front view"
+
+msgid "Pendiente"
+msgstr "Pending"
+
+msgid "Pie derecho"
+msgstr "Right foot · front view"
+
+msgid "Pie derecho · vista posterior"
+msgstr "Right foot · back view"
+
+msgid "Pie izquierdo"
+msgstr "Left foot · front view"
+
+msgid "Pie izquierdo · vista posterior"
+msgstr "Left foot · back view"
+
+msgid "Posponer recordatorios hasta mañana"
+msgstr "Snooze Reminders Until Tomorrow"
+
+msgid "Pospuesto. Guarda las preferencias para aplicar el cambio."
+msgstr "Snoozed. Save preferences to apply the change."
+
+msgid "Practica, adapta o descansa. Cada registro te ayuda a entender cómo responde tu cuerpo."
+msgstr "Practice, adapt or rest. Each record helps you understand how your body responds."
+
+msgid "Preferencias"
+msgstr "Preferences"
+
+msgid "Primero selecciona una zona por su nombre o en el dibujo."
+msgstr "First choose a region by name or on the map."
+
+msgid "Progreso"
+msgstr "Progress"
+
+msgid "Promedios calculados solo con mediciones explícitas. Dolor y esfuerzo antiguos mezclados no se reinterpretan."
+msgstr "Averages use explicit measurements only. Previous combined pain/effort values are not reinterpreted."
+
+msgid "Puedes guardar una sesión parcial, sensaciones o un día de descanso."
+msgstr "You can save a partial session, sensations, or a rest day."
+
+msgid "Puedes registrar descanso y cómo te sientes."
+msgstr "You can record rest and how you feel."
+
+msgid "Recordatorio diario"
+msgstr "Daily Reminder"
+
+msgid "Recordatorios a tu ritmo"
+msgstr "Reminders at Your Pace"
+
+msgid "Recorre tus registros o reprodúcelos como una animación. La escala 0–10 es la misma en todas las fechas. Zona sin marcar = sin datos, no ausencia de dolor; ? = intensidad sin registrar."
+msgstr "Browse your records or play them as an animation. The 0–10 scale is fixed across dates. Unmarked region = no data, not no pain; ? = intensity not recorded."
+
+msgid "Reemplazar datos"
+msgstr "Replace Data"
+
+msgid "Registrar"
+msgstr "Record"
+
+msgid "Registrar dolor"
+msgstr "Record Pain"
+
+msgid "Registrar esfuerzo"
+msgstr "Record Effort"
+
+msgid "Registro anterior"
+msgstr "Previous Record"
+
+msgid "Registro anterior: se muestra la silueta original para conservar la ubicación de tus puntos."
+msgstr "Previous record: the original silhouette preserves your point locations."
+
+msgid "Registro corporal cargado. Guardar crea una entrada nueva."
+msgstr "Body record loaded. Saving creates a new entry."
+
+msgid "Registro corporal guardado."
+msgstr "Body record saved."
+
+msgid "Registro corporal vinculado"
+msgstr "Linked Body Record"
+
+msgid "Registro de sensaciones"
+msgstr "Sensation Record"
+
+msgid "Registro del historial"
+msgstr "History Record"
+
+msgid "Registro eliminado"
+msgstr "Record Deleted"
+
+msgid "Registro general"
+msgstr "General Record"
+
+msgid "Registro restaurado."
+msgstr "Record restored."
+
+msgid "Registro {}/{} · {} · {}\n{}: máximo {}"
+msgstr "Record {}/{} · {} · {}\n{}: maximum {}"
+
+msgid "Registros recientes"
+msgstr "Recent Records"
+
+msgid "Región de la articulación de la rodilla. Lado derecho de tu cuerpo."
+msgstr "Knee joint region. Right side of your body."
+
+msgid "Región de la articulación de la rodilla. Lado izquierdo de tu cuerpo."
+msgstr "Knee joint region. Left side of your body."
+
+msgid "Región de la cabeza. "
+msgstr "Head region."
+
+msgid "Región de la mano · dorso. Lado derecho de tu cuerpo."
+msgstr "Hand region · back of hand. Right side of your body."
+
+msgid "Región de la mano · dorso. Lado izquierdo de tu cuerpo."
+msgstr "Hand region · back of hand. Left side of your body."
+
+msgid "Región de la mano · palma. Lado derecho de tu cuerpo."
+msgstr "Hand region · palm. Right side of your body."
+
+msgid "Región de la mano · palma. Lado izquierdo de tu cuerpo."
+msgstr "Hand region · palm. Left side of your body."
+
+msgid "Región del hombro, en la unión del brazo con el tronco. Lado derecho de tu cuerpo."
+msgstr "Shoulder region, where the arm meets the trunk. Right side of your body."
+
+msgid "Región del hombro, en la unión del brazo con el tronco. Lado izquierdo de tu cuerpo."
+msgstr "Shoulder region, where the arm meets the trunk. Left side of your body."
+
+msgid "Región del pie. Lado derecho de tu cuerpo."
+msgstr "Foot region. Right side of your body."
+
+msgid "Región del pie. Lado izquierdo de tu cuerpo."
+msgstr "Foot region. Left side of your body."
+
+msgid "Región entre el codo y la muñeca, sobre los extensores. Lado derecho de tu cuerpo."
+msgstr "Region between the elbow and wrist, over the extensor muscles. Right side of your body."
+
+msgid "Región entre el codo y la muñeca, sobre los extensores. Lado izquierdo de tu cuerpo."
+msgstr "Region between the elbow and wrist, over the extensor muscles. Left side of your body."
+
+msgid "Región entre el codo y la muñeca, sobre los flexores. Lado derecho de tu cuerpo."
+msgstr "Region between the elbow and wrist, over the flexor muscles. Right side of your body."
+
+msgid "Región entre el codo y la muñeca, sobre los flexores. Lado izquierdo de tu cuerpo."
+msgstr "Region between the elbow and wrist, over the flexor muscles. Left side of your body."
+
+msgid "Región escapular derecha"
+msgstr "Right scapular region · back view"
+
+msgid "Región escapular izquierda"
+msgstr "Left scapular region · back view"
+
+msgid "Región lateral del cuello. Lado derecho de tu cuerpo."
+msgstr "Side of the neck. Right side of your body."
+
+msgid "Región lateral del cuello. Lado izquierdo de tu cuerpo."
+msgstr "Side of the neck. Left side of your body."
+
+msgid "Región posterior de la pelvis, sobre el glúteo. Lado derecho de tu cuerpo."
+msgstr "Back of the pelvis, over the buttock. Right side of your body."
+
+msgid "Región posterior de la pelvis, sobre el glúteo. Lado izquierdo de tu cuerpo."
+msgstr "Back of the pelvis, over the buttock. Left side of your body."
+
+msgid "Reintentar"
+msgstr "Retry"
+
+msgid "Reintentar guardar borrador"
+msgstr "Retry Saving Draft"
+
+msgid "Repeticiones"
+msgstr "Repetitions"
+
+msgid "Reproducir"
+msgstr "Play"
+
+msgid "Respaldo guardado."
+msgstr "Backup saved."
+
+msgid "Restaurar"
+msgstr "Restore"
+
+msgid "Restaurar respaldo…"
+msgstr "Restore Backup…"
+
+msgid "Rodilla derecha · vista frontal"
+msgstr "Right knee · front view"
+
+msgid "Rodilla derecha · vista posterior"
+msgstr "Right knee · back view"
+
+msgid "Rodilla izquierda · vista frontal"
+msgstr "Left knee · front view"
+
+msgid "Rodilla izquierda · vista posterior"
+msgstr "Left knee · back view"
+
+msgid "Rutina de hoy"
+msgstr "Today's Routine"
+
+msgid "Rutinas"
+msgstr "Routines"
+
+msgid "Salir sin guardar los últimos cambios"
+msgstr "Exit Without Saving Recent Changes"
+
+msgid "Se conservará una copia de los archivos actuales antes de restaurar los datos."
+msgstr "A copy of the current files will be preserved before restoring data."
+
+msgid "Sección de ejercicios"
+msgstr "Exercise Section"
+
+msgid "Seguir editando"
+msgstr "Keep Editing"
+
+msgid "Selecciona una zona; clic derecho sobre un punto para eliminarlo"
+msgstr "Select a region; right-click a point to delete it"
+
+msgid "Seleccionar zona por nombre…"
+msgstr "Choose a Region by Name…"
+
+msgid "Sensación para los puntos nuevos o seleccionados"
+msgstr "Sensation for new or selected points"
+
+msgid "Sensación que se muestra en el heatmap; no modifica tus puntos"
+msgstr "Sensation displayed in the heatmap; does not modify your points"
+
+msgid "Sesiones parciales"
+msgstr "Partial Sessions"
+
+msgid "Sesiones y descansos"
+msgstr "Sessions and Rest"
+
+msgid "Sesión completa"
+msgstr "Complete Session"
+
+msgid "Sesión guardada."
+msgstr "Session saved."
+
+msgid "Sesión parcial"
+msgstr "Partial Session"
+
+msgid "Sesión parcial guardada. Hacer una parte también cuenta."
+msgstr "Partial session saved. Doing part of it counts too."
+
+msgid "Señala una zona del cuerpo o elígela por su nombre. Izquierda y derecha corresponden a tu cuerpo."
+msgstr "Point to a body region or choose it by name. Left and right refer to your own body."
+
+msgid "Siguiente"
+msgstr "Next"
+
+msgid "Sin cuentas ni telemetría. Los respaldos incluyen rutinas, sesiones, mapas y borradores."
+msgstr "No accounts or telemetry. Backups include routines, sessions, maps and drafts."
+
+msgid "Sin intensidad registrada"
+msgstr "No intensity recorded"
+
+msgid "Sin mediciones"
+msgstr "No Measurements"
+
+msgid "Sin puntos en este registro."
+msgstr "No points in this record."
+
+msgid "Solo se descartará el borrador de esta rutina. Las sesiones guardadas y los demás borradores se conservan."
+msgstr "Only this routine’s draft will be discarded. Saved sessions and other drafts are preserved."
+
+msgid "Tensión"
+msgstr "Tension"
+
+msgid "Tobillo derecho · vista frontal"
+msgstr "Right ankle · front view"
+
+msgid "Tobillo derecho · vista posterior"
+msgstr "Right ankle · back view"
+
+msgid "Tobillo izquierdo · vista frontal"
+msgstr "Left ankle · front view"
+
+msgid "Tobillo izquierdo · vista posterior"
+msgstr "Left ankle · back view"
+
+msgid "Todo el historial"
+msgstr "All History"
+
+msgid "Todos los momentos"
+msgstr "All Moments"
+
+msgid "Trabajado"
+msgstr "Worked"
+
+msgid "Trapecio derecho"
+msgstr "Right trapezius · back view"
+
+msgid "Trapecio izquierdo"
+msgstr "Left trapezius · back view"
+
+msgid "Tríceps derecho"
+msgstr "Right triceps · back view"
+
+msgid "Tríceps izquierdo"
+msgstr "Left triceps · back view"
+
+msgid "Tu proceso"
+msgstr "Your Process"
+
+msgid "Tu proceso empieza con un registro"
+msgstr "Your Process Starts With a Record"
+
+msgid "Tus datos necesitan revisión"
+msgstr "Your Data Needs Attention"
+
+msgid "Tus datos, en este equipo"
+msgstr "Your Data, on This Device"
+
+msgid "Tus sensaciones quedaron registradas."
+msgstr "Your sensations have been recorded."
+
+msgid "Ubicación"
+msgstr "Location"
+
+msgid "Ubicación del mapa anterior"
+msgstr "Location on Previous Map"
+
+msgid "Un momento para ti"
+msgstr "A Moment for You"
+
+msgid "Un punto por registro, de más antiguo a más reciente. Los huecos indican intensidad sin registrar. Si hay varios puntos de la misma sensación en una zona se usa el máximo."
+msgstr "One point per record, oldest to newest. Gaps mean intensity was not recorded. Multiple points of the same sensation in one region use the maximum value."
+
+msgid "Una sesión parcial también cuenta. Varias sesiones el mismo día suman un día de práctica."
+msgstr "A partial session counts too. Multiple sessions on the same day count as one practice day."
+
+msgid "Ver calor por intensidad de la sensación elegida"
+msgstr "Show Intensity Heatmap"
+
+msgid "Ver valores del gráfico"
+msgstr "View Chart Values"
+
+msgid "Zona anterior del abdomen. Lado derecho de tu cuerpo."
+msgstr "Front of the abdomen. Right side of your body."
+
+msgid "Zona anterior del abdomen. Lado izquierdo de tu cuerpo."
+msgstr "Front of the abdomen. Left side of your body."
+
+msgid "Zona del cuerpo"
+msgstr "Body Region"
+
+msgid "Zona del omóplato, en la parte superior de la espalda. Lado derecho de tu cuerpo."
+msgstr "Shoulder blade region, in the upper back. Right side of your body."
+
+msgid "Zona del omóplato, en la parte superior de la espalda. Lado izquierdo de tu cuerpo."
+msgstr "Shoulder blade region, in the upper back. Left side of your body."
+
+msgid "Zona lateral de la pelvis, a la altura de la cadera. Lado derecho de tu cuerpo."
+msgstr "Side of the pelvis, at the hip. Right side of your body."
+
+msgid "Zona lateral de la pelvis, a la altura de la cadera. Lado izquierdo de tu cuerpo."
+msgstr "Side of the pelvis, at the hip. Left side of your body."
+
+msgid "Zona lateral de las costillas, debajo del pectoral. Lado derecho de tu cuerpo."
+msgstr "Side of the ribs, below the pectoral muscle. Right side of your body."
+
+msgid "Zona lateral de las costillas, debajo del pectoral. Lado izquierdo de tu cuerpo."
+msgstr "Side of the ribs, below the pectoral muscle. Left side of your body."
+
+msgid "Zona sin identificar"
+msgstr "Unidentified Region"
+
+msgid "default_rutina_1"
+msgstr "default_rutina_1"
+
+msgid "derecha"
+msgstr "right"
+
+msgid "espalda"
+msgstr "back"
+
+msgid "frente"
+msgstr "front"
+
+msgid "intensidad sin registrar"
+msgstr "intensity not recorded"
+
+msgid "izquierda"
+msgstr "left"
+
+msgid "registrado"
+msgstr "recorded"
+
+msgid "sin datos"
+msgstr "no data"
+
+msgid "sin intensidad registrada"
+msgstr "no intensity recorded"
+
+msgid "{:.1}/10 · {} mediciones"
+msgstr "{:.1}/10 · {} measurements"
+
+msgid "{count} puntos en el mapa · borrador guardado"
+msgstr "{count} points on the map · draft saved"
+
+msgid "{done}/{} ejercicios hechos · {skipped} omitidos. Puedes guardar una sesión parcial; hacer algo también es progreso."
+msgstr "{done}/{} exercises done · {skipped} skipped. You can save a partial session; doing something is progress too."
+
+msgid "{key} · {} registros · {} con actividad{}"
+msgstr "{key} · {} records · {} with activity{}"
+
+msgid "{}\n{}"
+msgstr "{}\n{}"
+
+msgid "{} puntos"
+msgstr "{} points"
+
+msgid "{} · {}"
+msgstr "{} · {}"
+
+msgid "{} · {}/{} ejercicios"
+msgstr "{} · {}/{} exercises"
+
+msgid "{}/{} días · {}"
+msgstr "{}/{} days · {}"
+
+msgid "¿Empezar un nuevo borrador?"
+msgstr "Start a New Draft?"
+
+msgid "¿Restaurar este respaldo?"
+msgstr "Restore This Backup?"
+
+msgid "¿Te viene bien registrar cómo estás? Puedes practicar, adaptar o descansar."
+msgstr "Is this a good time to record how you feel? You can practice, adapt or rest."
+
+msgid "Últimas cinco semanas"
+msgstr "Last Five Weeks"
+
+msgid "Últimos 30 días"
+msgstr "Last 30 Days"
+
+msgid "Últimos 7 días"
+msgstr "Last 7 Days"
+
+msgid "Últimos 90 días"
+msgstr "Last 90 Days"
+

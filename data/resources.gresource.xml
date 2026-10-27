@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/diego/Bosu/icons/scalable/apps">
+    <file alias="org.diego.Bosu.svg">icons/hicolor/scalable/apps/org.diego.Bosu.svg</file>
+  </gresource>
+  <gresource prefix="/org/diego/Bosu/icons/symbolic/apps">
+    <file alias="org.diego.Bosu-symbolic.svg">icons/hicolor/symbolic/apps/org.diego.Bosu-symbolic.svg</file>
+  </gresource>
+</gresources>

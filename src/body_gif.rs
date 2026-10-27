@@ -10,12 +10,12 @@ use std::{
     path::Path,
 };
 
-pub fn moment_label(moment: &str) -> &str {
-    match moment {
+pub fn moment_label(moment: &str) -> String {
+    crate::i18n::tr(match moment {
         "before" => "Antes de la sesión",
         "after" => "Después de la sesión",
         _ => "Registro general",
-    }
+    })
 }
 pub fn render(
     cr: &cairo::Context,
@@ -39,18 +39,18 @@ pub fn render(
     cr.set_source_rgb(ink.red() as f64, ink.green() as f64, ink.blue() as f64);
     cr.set_font_size(14.);
     cr.move_to(12., 19.);
-    let _ = cr.show_text(&format!(
+    let _ = cr.show_text(&crate::i18n::tr(&format!(
         "{} · {}",
-        KINDS[kind.min(KINDS.len() - 1)],
+        crate::i18n::tr(KINDS[kind.min(KINDS.len() - 1)]),
         snapshot.date
-    ));
+    )));
     cr.set_font_size(11.);
     cr.move_to(12., 38.);
-    let _ = cr.show_text(moment_label(&snapshot.moment));
+    let _ = cr.show_text(&moment_label(&snapshot.moment));
     cr.move_to(15., height - 52.);
-    let _ = cr.show_text("Frente");
+    let _ = cr.show_text(&crate::i18n::tr("Frente"));
     cr.move_to(width / 2. + 15., height - 52.);
-    let _ = cr.show_text("Espalda");
+    let _ = cr.show_text(&crate::i18n::tr("Espalda"));
     for intensity in 0..=10u8 {
         let c = body_heat::color(kind, intensity);
         cr.set_source_rgb(c.0, c.1, c.2);
@@ -59,9 +59,9 @@ pub fn render(
     }
     cr.set_source_rgb(ink.red() as f64, ink.green() as f64, ink.blue() as f64);
     cr.move_to(158., height - 33.);
-    let _ = cr.show_text("0 a 10 · ? sin intensidad");
+    let _ = cr.show_text(&crate::i18n::tr("0 a 10 · ? sin intensidad"));
     cr.move_to(16., height - 10.);
-    let _ = cr.show_text("Gris: sin datos · un cuadro por registro");
+    let _ = cr.show_text(&crate::i18n::tr("Gris: sin datos · un cuadro por registro"));
 }
 fn blocks(out: &mut impl Write, bytes: &[u8]) -> std::io::Result<()> {
     for b in bytes.chunks(255) {
@@ -102,7 +102,7 @@ fn frame(out: &mut impl Write, pixels: &[u8], width: u16, height: u16) -> std::i
 }
 pub fn export(path: &Path, snapshots: &[Snapshot], kind: usize) -> Result<(), String> {
     if snapshots.is_empty() {
-        return Err("No hay registros SVG en el período seleccionado".into());
+        return Err("No hay registros corporales en el período seleccionado".into());
     }
     let model = Model::load()?;
     let (width, height) = (420u16, 570u16);
@@ -112,13 +112,14 @@ pub fn export(path: &Path, snapshots: &[Snapshot], kind: usize) -> Result<(), St
         .as_nanos();
     let temp = path.with_extension(format!("gif.{nonce}.part"));
     let result = (|| -> Result<(), String> {
-        let mut out = BufWriter::new(
-            std::fs::OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&temp)
-                .map_err(|e| e.to_string())?,
-        );
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut out = BufWriter::new(options.open(&temp).map_err(|e| e.to_string())?);
         out.write_all(b"GIF89a").map_err(|e| e.to_string())?;
         out.write_all(&width.to_le_bytes())
             .map_err(|e| e.to_string())?;
@@ -195,6 +196,33 @@ pub fn export(path: &Path, snapshots: &[Snapshot], kind: usize) -> Result<(), St
     }
     result
 }
+/// Write via GIO so a file granted by the desktop portal works inside Flatpak.
+pub fn export_file(
+    file: &gtk::gio::File,
+    snapshots: &[Snapshot],
+    kind: usize,
+) -> Result<(), String> {
+    use gtk::prelude::*;
+    let root = gtk::glib::user_cache_dir().join("bosu");
+    std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
+    let cached = root.join(format!("export-{}.gif", gtk::glib::uuid_string_random()));
+    let result = (|| {
+        export(&cached, snapshots, kind)?;
+        let bytes = std::fs::read(&cached).map_err(|e| e.to_string())?;
+        file.replace_contents(
+            &bytes,
+            None,
+            false,
+            gtk::gio::FileCreateFlags::PRIVATE | gtk::gio::FileCreateFlags::REPLACE_DESTINATION,
+            gtk::gio::Cancellable::NONE,
+        )
+        .map(|_| ())
+        .map_err(|e| e.to_string())
+    })();
+    let _ = std::fs::remove_file(cached);
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,7 +234,7 @@ mod tests {
         a.points[0].intensity = Some(9);
         let path =
             std::env::temp_dir().join(format!("bosu-evolution-test-{}.gif", std::process::id()));
-        export(&path, &[first, a], 0).unwrap();
+        export_file(&gtk::gio::File::for_path(&path), &[first, a], 0).unwrap();
         let bytes = std::fs::read(&path).unwrap();
         assert!(bytes.starts_with(b"GIF89a"));
         assert_eq!(bytes.last(), Some(&0x3b));

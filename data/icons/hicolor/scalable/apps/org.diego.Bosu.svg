@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs><linearGradient id="ball" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#62a0ea"/><stop offset="1" stop-color="#1c71d8"/></linearGradient></defs>
+  <!-- A balance trainer: calm movement, with a stable foundation. Original Bosu artwork. -->
+  <ellipse cx="64" cy="109" rx="51" ry="8" fill="#000" opacity=".12"/>
+  <path d="M16 98a48 48 0 0 1 96 0Z" fill="#1a5fb4"/>
+  <path d="M16 92a48 48 0 0 1 96 0Z" fill="url(#ball)"/>
+  <path d="M24 91a40 40 0 0 1 80 0" fill="none" stroke="#99c1f1" stroke-width="3" opacity=".65"/>
+  <rect x="8" y="94" width="112" height="12" rx="6" fill="#3d3846"/>
+  <rect x="8" y="91" width="112" height="9" rx="4.5" fill="#77767b"/>
+  <circle cx="66" cy="23" r="9" fill="#f6f5f4" stroke="#deddda" stroke-width="2"/>
+  <path d="m64 37-9 18 14 6 8 18M57 53l-14 22M59 45l-16-4M64 42l17-3" fill="none" stroke="#f6f5f4" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

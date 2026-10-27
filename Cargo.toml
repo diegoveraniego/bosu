@@ -1,7 +1,10 @@
 [package]
 name = "bosu"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
+license = "MIT"
+repository = "https://github.com/diegoveraniego/bosu"
+description = "A private GNOME rehabilitation journal that values partial progress and rest"
 
 [dependencies]
 adw = { version = "0.9.1", package = "libadwaita", features = ["v1_4"] }

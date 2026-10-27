@@ -36,7 +36,7 @@ pub fn routines() -> Vec<Rutina> {
     vec![
         Rutina {
             id: "sesion_kine_1".into(),
-            nombre: "Sesión Kine · Pared y suelo".into(),
+            nombre: "Sesión Kine · Parte 1: Pared y suelo".into(),
             meta_semanal: 1,
             secciones: vec![
                 warmup.clone(),
@@ -72,7 +72,7 @@ pub fn routines() -> Vec<Rutina> {
         },
         Rutina {
             id: "sesion_kine_2".into(),
-            nombre: "Sesión Kine · TRX y barra".into(),
+            nombre: "Sesión Kine · Parte 2: TRX y barra".into(),
             meta_semanal: 1,
             secciones: vec![
                 warmup,
@@ -113,6 +113,23 @@ pub fn routines() -> Vec<Rutina> {
 
 pub fn add_missing(config: &mut Configuracion) -> bool {
     let mut changed = false;
+    for routine in &mut config.rutinas {
+        let name = match (routine.id.as_str(), routine.nombre.as_str()) {
+            ("default_rutina_1", "Rutina Principal" | "Rutina 1") => Some("Sesión Kine Full"),
+            ("sesion_kine_1", "Sesión Kine · Pared y suelo") => {
+                Some("Sesión Kine · Parte 1: Pared y suelo")
+            }
+            ("sesion_kine_2", "Sesión Kine · TRX y barra") => {
+                Some("Sesión Kine · Parte 2: TRX y barra")
+            }
+            _ => None,
+        };
+        if let Some(name) = name {
+            routine.nombre = name.into();
+            changed = true;
+        }
+    }
+
     for routine in routines() {
         if !config.rutinas.iter().any(|r| r.id == routine.id) {
             config.rutinas.push(routine);

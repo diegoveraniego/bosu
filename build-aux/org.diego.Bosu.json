@@ -1,0 +1,59 @@
+{
+  "app-id": "org.diego.Bosu",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "50",
+  "sdk": "org.gnome.Sdk",
+  "sdk-extensions": [
+    "org.freedesktop.Sdk.Extension.rust-stable"
+  ],
+  "command": "bosu",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=dri"
+  ],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/rust-stable/bin",
+    "env": {
+      "CARGO_HOME": "/run/build/bosu/cargo"
+    }
+  },
+  "modules": [
+    {
+      "name": "bosu",
+      "buildsystem": "simple",
+      "build-commands": [
+        "cargo build --release --locked --offline",
+        "install -Dm755 target/release/bosu /app/bin/bosu",
+        "install -Dm644 data/org.diego.Bosu.desktop /app/share/applications/org.diego.Bosu.desktop",
+        "install -Dm644 data/org.diego.Bosu.metainfo.xml /app/share/metainfo/org.diego.Bosu.metainfo.xml",
+        "install -Dm644 data/org.diego.Bosu.service /app/share/dbus-1/services/org.diego.Bosu.service",
+        "install -Dm644 data/icons/hicolor/scalable/apps/org.diego.Bosu.svg /app/share/icons/hicolor/scalable/apps/org.diego.Bosu.svg",
+        "install -Dm644 data/icons/hicolor/symbolic/apps/org.diego.Bosu-symbolic.svg /app/share/icons/hicolor/symbolic/apps/org.diego.Bosu-symbolic.svg",
+        "install -Dm644 LICENSE /app/share/licenses/bosu/LICENSE",
+        "install -Dm644 src/assets/body-map/NOTICE.md /app/share/doc/bosu/body-map-NOTICE.md"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "..",
+          "skip": [
+            "target",
+            ".git",
+            ".flatpak-builder",
+            "build-dir",
+            "repo"
+          ]
+        },
+        "cargo-sources.json",
+        {
+          "type": "inline",
+          "contents": "[source.crates-io]\nreplace-with = 'vendored-sources'\n[source.vendored-sources]\ndirectory = 'cargo/vendor'\n",
+          "dest": ".cargo",
+          "dest-filename": "config.toml"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+name: Flatpak bundle
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'build-aux/**'
+      - 'Cargo.*'
+      - 'build.rs'
+      - 'po/**'
+      - '.github/workflows/flatpak.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'data/**'
+      - 'build-aux/**'
+      - 'Cargo.*'
+      - 'build.rs'
+      - 'po/**'
+      - '.github/workflows/flatpak.yml'
+permissions:
+  contents: read
+jobs:
+  flatpak:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: build-aux/org.diego.Bosu.json
+          bundle: bosu.flatpak
+          artifact-name: bosu-flatpak
+          build-debug-bundle: false
+          run-tests: false

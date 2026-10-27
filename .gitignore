@@ -1,4 +1,13 @@
 /target
 **/*.rs.bk
-Cargo.lock
 bosu_history.jsonl
+
+/.flatpak-builder
+/build-dir
+/repo
+/vendor
+
+/bosu_data.json
+/bosu_config.json
+/bosu_body.json
+/backups

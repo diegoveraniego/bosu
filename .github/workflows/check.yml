@@ -1,0 +1,35 @@
+name: Checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  rust-and-gnome:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev librsvg2-bin desktop-file-utils appstream xvfb dbus-x11 python3-pil
+      - run: cargo fmt --all -- --check
+      - run: cargo test --locked
+      - run: cargo clippy --locked -- -D warnings
+      - name: GTK session, partial save, linked map, navigation and draft recovery
+        run: xvfb-run -a dbus-run-session -- env GTK_A11Y=none G_DEBUG=fatal-warnings BOSU_SCREENSHOT_DIR=/tmp/bosu-screenshots cargo test --locked ui_smoke -- --ignored --test-threads=1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gnome-screenshots
+          path: /tmp/bosu-screenshots
+      - name: Independent GIF decoding
+        run: |
+          BOSU_GIF_TEST_OUTPUT=/tmp/bosu-check.gif cargo test --locked exports_two_distinct_dated_frames
+          python3 scripts/verify_body_gif.py /tmp/bosu-check.gif
+      - name: GNOME metadata
+        run: |
+          desktop-file-validate data/org.diego.Bosu.desktop
+          appstreamcli validate --no-net data/org.diego.Bosu.metainfo.xml
+          python3 scripts/generate-flatpak-sources.py
+          python3 scripts/compile-translations.py --check
+          git diff --exit-code -- build-aux/cargo-sources.json po/en.json
+      - run: cargo build --release --locked
