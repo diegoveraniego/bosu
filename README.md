@@ -27,8 +27,14 @@ Cada rutina conserva su propio borrador. Se guarda automáticamente al editar y 
 de vista, rutina o cerrar. Si falla una escritura, se informa del error y el contenido
 permanece abierto para reintentar. El guardado de una sesión y sus mapas es una sola operación.
 
-Las rutinas personales **Sesión Kine Full**, **Parte 1: Pared y suelo** y **Parte 2: TRX y barra**
-se conservan y pueden editarse en Preferencias. Los estiramientos están al final de las
+Al guardar, **Hoy** conserva visibles los ejercicios de la última sesión de esa rutina
+en el día. Puedes continuarla: guardar de nuevo actualiza ese registro sin duplicarlo.
+Un borrador con cambios pendientes tiene prioridad; un formulario vacío no oculta lo
+que ya guardaste hoy. Descartar el borrador vuelve a la sesión guardada si existe.
+
+Las rutinas personales **Sesión Kine Full** y **Sesión Kine · Pared, suelo, TRX y barra**
+pueden editarse en Preferencias. Las antiguas partes 1 y 2 se unen automáticamente en una sola rutina,
+con un calentamiento inicial y los estiramientos al final. Los estiramientos están al final de las
 rutinas de kine y la variante de mantener 5 segundos sigue siendo opcional.
 
 ## Cuerpo y evolución
@@ -143,3 +149,80 @@ La revisión de una versión, la prueba GTK con Xvfb, la comprobación independi
 las capturas reales para GNOME se describen en [docs/RELEASE.md](docs/RELEASE.md). Los workflows
 de CI están en `.github/workflows/`. La licencia del código y el icono original es MIT;
 consulta también la atribución del modelo corporal antes de distribuir una versión pública.
+
+## Testing · Movimiento (experimental)
+
+En el menú principal, **Testing · Movimiento** abre un laboratorio en el navegador
+mediante un servidor de solo lectura en `127.0.0.1`, activo mientras Bosu esté abierto.
+La primera carga requiere conexión para descargar MediaPipe Tasks Vision (0.10.32)
+y el modelo Pose Landmarker Lite. El video y las poses se procesan en el navegador;
+no se envían al servidor ni se incorporan al diario o a sus respaldos.
+
+1. Pulsa **Cargar MediaPipe** y abre un video local o concede acceso a la cámara.
+2. Con la cámara, pulsa **Grabar ejemplo** y luego **Detener grabación**.
+   Puedes descargar la grabación antes de cerrar la página.
+3. Revisa el video a 5 FPS con los botones de cuadro o la barra. Marca el inicio y
+   el fin de una repetición completa (incluido el regreso), entre 0,8 y 30 segundos.
+4. Pulsa **Usar repetición como patrón**. Abre otro video o vuelve a la cámara,
+   pulsa **Iniciar conteo** y reproduce el video si corresponde.
+5. Exporta el patrón JSON si quieres reutilizarlo. Al cerrar se pierden los datos
+   no exportados. **Apagar cámara** libera el dispositivo.
+
+El esqueleto muestra los 33 puntos de Pose Landmarker; la comparación utiliza las
+extremidades y el torso normalizados por posición y tamaño. Exige visibilidad del
+cuerpo completo y progreso ordenado por el ejemplo, con umbrales experimentales.
+Mantén el encuadre y la orientación: no reconoce cambios de perspectiva ni refleja
+el patrón automáticamente. No evalúa la técnica y no modifica las repeticiones del
+diario. Esta versión es un prototipo para validar el conteo con movimientos reales.
+
+El laboratorio requiere un navegador con cámara y MediaRecorder para grabar.
+El paquete Flatpak sigue sin acceso de red: la compatibilidad de este lanzamiento
+externo con los portales debe verificarse antes de distribuirlo como función estable.
+
+Validación del contador: `node scripts/test-motion.mjs`.
+Referencia de integración: [MediaPipe Pose Landmarker para web](https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker/web_js).
+
+## Modo enfoque (prueba de diseño)
+
+Al iniciar Bosu se abre directamente **Modo enfoque (prueba)**. También está disponible
+en el menú del diario. Muestra una ventana con un ejercicio a la vez,
+fondo de un solo color según la categoría, texto grande y controles mínimos.
+Parte de las marcas que ya tienes en la rutina de hoy y comienza por el primer
+pendiente. Las marcas se conservan como borrador al avanzar o cerrar la ventana.
+Al terminar, **Guardar avance** registra la sesión o actualiza la de hoy sin duplicarla.
+El resumen admite notas, dolor y esfuerzo opcionales. Los mapas y demás datos que
+ya tenía la sesión se conservan.
+
+- **✓ / Enter:** marcar listo y avanzar.
+- **Ícono de saltar / S:** registrar el ejercicio como omitido y continuar, sin contarlo como hecho.
+  Puedes volver con la flecha y marcarlo como listo si decides hacerlo después.
+- **← / →:** revisar sin marcar ejercicios. Las opciones están en el menú de la sesión.
+- Temporizador opcional de 30, 60, 90 o 120 segundos; **Espacio** lo inicia o pausa.
+- El temporizador se pausa al salir de la ventana y se reinicia al cambiar de ejercicio.
+  Al terminar el tiempo espera tu confirmación; no marca ni avanza automáticamente.
+- Botón de pantalla completa; **Escape** permite salir de ella.
+
+Es una alternativa experimental para probar la interacción antes de cambiar el
+flujo principal. El formulario habitual se actualiza al cerrar la sesión guiada.
+
+La apariencia ofrece **Sistema, Claro y Oscuro**, desde el botón de apariencia en
+la parte inferior del modo enfoque o **Preferencias → Acompañamiento → Apariencia**.
+La elección se conserva al reiniciar y se aplica a toda la app. De forma predeterminada
+sigue el sistema. Los fondos azul, verde, morado y naranja se adaptan a las superficies
+de Adwaita; botones y texto conservan sus estilos nativos, incluido alto contraste.
+Referencia: [GNOME HIG · UI Styling](https://developer.gnome.org/hig/guidelines/ui-styling.html).
+
+El modo enfoque no tiene barra de título ni decoraciones. Los controles discretos
+al pie permiten cambiar la apariencia, abrir las opciones, alternar pantalla completa
+y salir conservando el borrador. Puedes mover la ventana arrastrando el fondo.
+
+### Vista de práctica a distancia
+
+El nombre del ejercicio ocupa el espacio central y ajusta su tamaño a la ventana,
+incluso con nombres largos. El botón de información muestra el nombre completo,
+la categoría y las repeticiones previstas. Los demás controles están en los tres
+puntos de abajo a la derecha; **Enter** y **S** funcionan con el menú cerrado.
+La barra superior tiene un segmento por ejercicio: verde hecho, amarillo omitido y
+neutro pendiente. Una marca indica la posición actual. Los estados también tienen
+texto para lectores de pantalla y al pasar el puntero; en alto contraste se usan
+superficies del sistema y bordes distintos.

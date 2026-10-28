@@ -141,6 +141,18 @@ fn ui_smoke_partial_session_linked_map_navigation_and_draft() {
     assert_eq!(data.sessions[0].ejercicios_completados, 1);
     assert_eq!(data.sessions[0].dolor, None);
     assert_eq!(repo.all_maps().len(), 1);
+    let resumed_checks: Vec<_> = children(&window)
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::CheckButton>().ok())
+        .filter(|c| c.tooltip_text().as_deref() == Some("Marcar ejercicio como hecho"))
+        .collect();
+    assert!(resumed_checks[0].is_active());
+    resumed_checks[1].set_active(true);
+    buttons(&window, "Guardar sesión")[0].emit_clicked();
+    pump();
+    assert_eq!(repo.snapshot().sessions.len(), 1);
+    assert_eq!(repo.snapshot().sessions[0].ejercicios_completados, 2);
+    assert_eq!(repo.all_maps().len(), 1);
     app.lookup_action("open-body").unwrap().activate(None);
     pump();
     capture(&window, "body.png");
@@ -158,6 +170,69 @@ fn ui_smoke_partial_session_linked_map_navigation_and_draft() {
         .unwrap();
     notes.set_text("Descanso <suave> & sin presión");
     pump();
+    app.lookup_action("focus-preview").unwrap().activate(None);
+    pump();
+    let focus = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Window>().ok())
+        .find(|w| w.title().as_deref() == Some("Bosu · Modo enfoque (prueba)"))
+        .unwrap();
+    assert!(!window.is_visible());
+    buttons(&focus, "Continuar")[0].emit_clicked();
+    pump();
+    let segments = children(&focus)
+        .into_iter()
+        .find(|w| w.widget_name() == "focus-progress")
+        .unwrap();
+    let steps: Vec<_> = children(&segments)
+        .into_iter()
+        .filter(|w| w.has_css_class("focus-step"))
+        .collect();
+    assert_eq!(steps.len(), repo.snapshot().sessions[0].ejercicios.len());
+    assert_eq!(steps.iter().filter(|w| w.has_css_class("done")).count(), 2);
+    assert!(
+        children(&focus)
+            .into_iter()
+            .any(|w| w.widget_name() == "focus-exercise-title")
+    );
+    dropdown(&focus, "Sistema").set_selected(2);
+    pump();
+    assert!(adw::StyleManager::default().is_dark());
+    assert_eq!(repo.snapshot().preferences.appearance, "dark");
+    dropdown(&focus, "Sistema").set_selected(0);
+    children(&focus)
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.widget_name() == "focus-skip")
+        .unwrap()
+        .emit_clicked();
+    pump();
+    children(&focus)
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.widget_name() == "focus-done")
+        .unwrap()
+        .emit_clicked();
+    pump();
+    assert_eq!(repo.snapshot().sessions.len(), 1);
+    assert_eq!(repo.snapshot().sessions[0].ejercicios_completados, 2);
+    assert!(
+        children(&segments)
+            .into_iter()
+            .any(|w| w.has_css_class("skipped"))
+    );
+    buttons(&focus, "Terminar por hoy")[0].emit_clicked();
+    pump();
+    buttons(&focus, "Guardar avance")[0].emit_clicked();
+    pump();
+    assert!(window.is_visible());
+    assert_eq!(repo.snapshot().sessions.len(), 1);
+    assert_eq!(repo.snapshot().sessions[0].ejercicios_completados, 3);
+    assert_eq!(
+        repo.snapshot().sessions[0].ejercicios[2].estado,
+        models::ExerciseState::Skipped
+    );
+    assert_eq!(repo.all_maps().len(), 1);
     window.close();
     pump();
     assert_eq!(

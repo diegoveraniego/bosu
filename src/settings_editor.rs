@@ -46,6 +46,23 @@ pub fn show_settings_window(
         .title(crate::i18n::tr("Acompañamiento"))
         .icon_name("preferences-system-notifications-symbolic")
         .build();
+    let appearance_group = PreferencesGroup::builder()
+        .title(crate::i18n::tr("Apariencia"))
+        .build();
+    let appearance = adw::ComboRow::builder()
+        .title(crate::i18n::tr("Tema"))
+        .model(&gtk::StringList::new(&["Sistema", "Claro", "Oscuro"]))
+        .selected(crate::appearance::index(&preferences.borrow().appearance))
+        .build();
+    appearance.connect_selected_notify(glib::clone!(
+        #[strong]
+        preferences,
+        move |row| {
+            preferences.borrow_mut().appearance = crate::appearance::value(row.selected()).into();
+        }
+    ));
+    appearance_group.add(&appearance);
+    pref_page.add(&appearance_group);
     let reminder_group=PreferencesGroup::builder().title(crate::i18n::tr("Recordatorios a tu ritmo")).description(crate::i18n::tr("Opcionales y sin presión. Funcionan mientras Bosu está abierto; no se instala ningún servicio en segundo plano.")).build();
     let enable = adw::SwitchRow::builder()
         .title(crate::i18n::tr("Recordatorio diario"))

@@ -1,0 +1,17 @@
+import {readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const source=readFileSync(new URL('../src/motion/counter.js',import.meta.url),'utf8');
+const {Counter,validatePattern,feature}=await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+const pose=x=>Array(44).fill(x);
+const frames=[0,.2,.4,.6,.8,1,.8,.6,.4,.2,0].map(pose);
+validatePattern({version:1,frames});
+const c=new Counter(frames);
+let time=0;
+for(let rep=0;rep<3;rep++)for(const f of frames)c.update(f,time+=200);
+assert.equal(c.count,3,'three complete trajectories');
+c.reset();for(let i=0;i<50;i++)c.update(pose(0),time+=200);assert.equal(c.count,0,'holding starting pose');
+c.reset();for(const f of frames.slice(0,5))c.update(f,time+=200);c.update(null,time+=200);for(const f of frames.slice(5))c.update(f,time+=200);assert.equal(c.count,0,'occlusion invalidates partial repetition');
+assert.throws(()=>validatePattern({version:1,frames:Array(10).fill(pose(0))}));
+assert.throws(()=>validatePattern({version:1,frames:[[]]}));
+assert.equal(feature(null),null);
+console.log('Motion counter: complete reps, stationary pose, occlusion and invalid patterns OK');

@@ -15,3 +15,26 @@
 .bar-chart-bar { background-color: @warning_color; border-radius: 4px 4px 0 0; min-width: 24px; margin: 2px; }
 .goal-pill { min-width: 24px; min-height: 12px; border-radius: 6px; background-color: alpha(@theme_fg_color, 0.1); margin: 2px; }
 .goal-pill.done { background-color: @accent_bg_color; }
+
+/* Guided session: the original Bosu category palette on native theme surfaces.
+ * Mixing with Adwaita's window background adapts to light and dark appearance. */
+.focus-preview { color: @window_fg_color; background-color: @window_bg_color; }
+.focus-blue { background-color: mix(@window_bg_color, #3584e4, 0.14); }
+.focus-green { background-color: mix(@window_bg_color, #33d17a, 0.14); }
+.focus-purple { background-color: mix(@window_bg_color, #c061cb, 0.14); }
+.focus-orange { background-color: mix(@window_bg_color, #ff7800, 0.14); }
+.focus-preview.focus-high-contrast { background-color: @window_bg_color; }
+.focus-preview headerbar { background: transparent; box-shadow: none; }
+.focus-preview .focus-heading { font-size: 2em; font-weight: bold; }
+.focus-preview .focus-plan { font-size: 1.3em; }
+.focus-preview .focus-caption { font-size: 0.9em; }
+.focus-preview .focus-clock { font-size: 3.5em; font-weight: 300; font-feature-settings: "tnum"; }
+.focus-preview button.focus-primary { padding: 14px 24px; }
+
+.focus-step { min-height: 6px; border-radius: 3px; background-color: alpha(@window_fg_color, 0.12); }
+.focus-step.done { background-color: #2ec27e; }
+.focus-step.skipped { background-color: #e5a50a; }
+.focus-step.current { box-shadow: 0 -2px @window_fg_color; }
+.focus-high-contrast .focus-step { border: 1px solid @window_fg_color; }
+.focus-high-contrast .focus-step.done { background-color: @window_fg_color; }
+.focus-high-contrast .focus-step.skipped { background-color: @window_bg_color; border: 2px dashed @window_fg_color; }

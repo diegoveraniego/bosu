@@ -312,10 +312,9 @@ fn render(
     }
     let data = repo.snapshot();
     let routine = data.config.rutinas.iter().find(|r| r.id == key);
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
     let mut doc = data
-        .drafts
-        .get(key)
-        .cloned()
+        .session_for_day(key, &today)
         .unwrap_or_else(|| RegistroSesion::new(routine));
     doc.prepare();
     let status = Label::builder()
@@ -332,6 +331,21 @@ fn render(
         status: status.downgrade(),
     });
     *current.borrow_mut() = Some(state.clone());
+    if data
+        .sessions
+        .iter()
+        .any(|session| session.id == state.doc.borrow().id)
+    {
+        container.append(
+            &Label::builder()
+                .label(crate::i18n::tr(
+                    "Tu sesión guardada de hoy. Puedes continuarla y guardar los cambios.",
+                ))
+                .wrap(true)
+                .xalign(0.)
+                .build(),
+        );
+    }
     container.append(&status);
     let retry = Button::with_label(&crate::i18n::tr("Reintentar guardar borrador"));
     retry.set_halign(gtk::Align::Start);
@@ -776,7 +790,7 @@ fn render(
     options.append(&discard);
     discard.connect_clicked(glib::clone!(#[strong] state,#[strong] current,#[strong] on_changed,#[weak] toasts,#[weak] container,move|button|{
         let Some(parent)=button.root().and_downcast::<gtk::Window>()else{return;};
-        let dialog=adw::MessageDialog::new(Some(&parent),Some(&crate::i18n::tr("¿Empezar un nuevo borrador?")),Some(&crate::i18n::tr("Solo se descartará el borrador de esta rutina. Las sesiones guardadas y los demás borradores se conservan.")));
+        let dialog=adw::MessageDialog::new(Some(&parent),Some(&crate::i18n::tr("¿Descartar los cambios del borrador?")),Some(&crate::i18n::tr("Volverás a la sesión guardada de hoy si existe. Las sesiones guardadas y los demás borradores se conservan.")));
         dialog.add_responses(&[("cancel",&crate::i18n::tr("Cancelar")),("discard",&crate::i18n::tr("Descartar borrador"))]);dialog.set_default_response(Some("cancel"));dialog.set_close_response("cancel");dialog.set_response_appearance("discard",adw::ResponseAppearance::Destructive);
         dialog.connect_response(Some("discard"),glib::clone!(#[strong] state,#[strong] current,#[strong] on_changed,#[weak] toasts,#[weak] container,move|_,_|match state.repo.update(|data|{data.drafts.remove(&state.key);Ok(())}){
             Ok(())=>{state.cancel();render(&container,&state.repo,&state.key,current.clone(),on_changed.clone(),toasts.clone());},Err(error)=>toasts.add_toast(crate::toast(&error))

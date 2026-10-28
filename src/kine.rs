@@ -14,7 +14,7 @@ fn section(title: &str, items: &[(&str, &str)]) -> Categoria {
     }
 }
 
-pub fn routines() -> Vec<Rutina> {
+fn parts() -> Vec<Rutina> {
     let warmup = section("Calentamiento", &[("Bici o elíptica", "15 minutos")]);
     let stretches = section(
         "Estiramientos · siempre al final",
@@ -111,27 +111,80 @@ pub fn routines() -> Vec<Rutina> {
     ]
 }
 
+fn merge_sections(first: &mut Rutina, second: Rutina) {
+    let mut stretches = Vec::new();
+    let mut sections = Vec::new();
+    for section in first.secciones.drain(..).chain(second.secciones) {
+        let target = if section.titulo.starts_with("Estiramientos") {
+            &mut stretches
+        } else {
+            &mut sections
+        };
+        if !target.iter().any(|existing: &Categoria| {
+            existing.titulo == section.titulo
+                && existing.ejercicios.len() == section.ejercicios.len()
+                && existing
+                    .ejercicios
+                    .iter()
+                    .zip(&section.ejercicios)
+                    .all(|(a, b)| a.nombre == b.nombre && a.repeticiones == b.repeticiones)
+        }) {
+            target.push(section);
+        }
+    }
+    sections.extend(stretches);
+    first.secciones = sections;
+}
+
+pub fn routines() -> Vec<Rutina> {
+    let mut parts = parts().into_iter();
+    let mut routine = parts.next().unwrap();
+    merge_sections(&mut routine, parts.next().unwrap());
+    routine.nombre = "Sesión Kine · Pared, suelo, TRX y barra".into();
+    vec![routine]
+}
+
 pub fn add_missing(config: &mut Configuracion) -> bool {
     let mut changed = false;
     for routine in &mut config.rutinas {
-        let name = match (routine.id.as_str(), routine.nombre.as_str()) {
-            ("default_rutina_1", "Rutina Principal" | "Rutina 1") => Some("Sesión Kine Full"),
-            ("sesion_kine_1", "Sesión Kine · Pared y suelo") => {
-                Some("Sesión Kine · Parte 1: Pared y suelo")
-            }
-            ("sesion_kine_2", "Sesión Kine · TRX y barra") => {
-                Some("Sesión Kine · Parte 2: TRX y barra")
-            }
-            _ => None,
-        };
-        if let Some(name) = name {
-            routine.nombre = name.into();
+        if routine.id == "default_rutina_1"
+            && matches!(routine.nombre.as_str(), "Rutina Principal" | "Rutina 1")
+        {
+            routine.nombre = "Sesión Kine Full".into();
             changed = true;
         }
     }
 
+    let had_second = config.rutinas.iter().any(|r| r.id == "sesion_kine_2");
+    if let Some(index) = config.rutinas.iter().position(|r| r.id == "sesion_kine_2") {
+        let second = config.rutinas.remove(index);
+        if let Some(first) = config.rutinas.iter_mut().find(|r| r.id == "sesion_kine_1") {
+            merge_sections(first, second);
+        } else {
+            let mut first = parts().remove(0);
+            merge_sections(&mut first, second);
+            config.rutinas.push(first);
+        }
+        changed = true;
+    }
+    if config.ultima_rutina_seleccionada.as_deref() == Some("sesion_kine_2") {
+        config.ultima_rutina_seleccionada = Some("sesion_kine_1".into());
+        changed = true;
+    }
     for routine in routines() {
-        if !config.rutinas.iter().any(|r| r.id == routine.id) {
+        if let Some(first) = config.rutinas.iter_mut().find(|r| r.id == routine.id) {
+            if matches!(
+                first.nombre.as_str(),
+                "Sesión Kine · Pared y suelo" | "Sesión Kine · Parte 1: Pared y suelo"
+            ) {
+                // An installation with only the first part also needs the second.
+                if !had_second {
+                    merge_sections(first, parts().remove(1));
+                }
+                first.nombre = routine.nombre;
+                changed = true;
+            }
+        } else {
             config.rutinas.push(routine);
             changed = true;
         }
@@ -142,6 +195,29 @@ pub fn add_missing(config: &mut Configuracion) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn combines_existing_parts_preserving_edits_and_selection() {
+        let mut config = Configuracion::default();
+        config.rutinas.extend(parts());
+        config.rutinas[2].secciones[1].ejercicios[0].repeticiones = "12 personalizadas".into();
+        config.ultima_rutina_seleccionada = Some("sesion_kine_2".into());
+        assert!(add_missing(&mut config));
+        assert_eq!(config.rutinas.len(), 2);
+        let merged = &config.rutinas[1];
+        assert_eq!(merged.secciones.len(), 6);
+        assert_eq!(merged.secciones[0].titulo, "Calentamiento");
+        assert!(merged.secciones[5].titulo.starts_with("Estiramientos"));
+        assert_eq!(
+            merged.secciones[3].ejercicios[0].repeticiones,
+            "12 personalizadas"
+        );
+        assert_eq!(
+            config.ultima_rutina_seleccionada.as_deref(),
+            Some("sesion_kine_1")
+        );
+        assert!(!add_missing(&mut config));
+    }
+
     #[test]
     fn migration_preserves_customization_and_is_idempotent() {
         let mut config = Configuracion::default();

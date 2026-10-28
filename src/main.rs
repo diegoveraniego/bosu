@@ -4,8 +4,12 @@ use std::{
     cell::{Cell, RefCell},
     rc::Rc,
 };
+mod appearance;
+mod focus_mode;
+mod focus_title;
 mod i18n;
 mod models;
+mod motion;
 pub use models::{Categoria, Configuracion, Ejercicio, RegistroSesion, Rutina};
 mod body_evolution;
 mod body_gif;
@@ -95,6 +99,11 @@ fn main() -> glib::ExitCode {
             Err(error) => recovery(&window, error),
         }
         window.present();
+        // Launch into the guided session. Rebuilding the journal after closing
+        // it must not open the guided window again.
+        if let Some(focus) = app.lookup_action("focus-preview") {
+            focus.activate(None);
+        }
     });
     app.run()
 }
@@ -102,8 +111,9 @@ fn show_active_dialog(window: &adw::ApplicationWindow) -> bool {
     for widget in gtk::Window::list_toplevels() {
         if let Ok(child) = widget.downcast::<gtk::Window>()
             && child.is_visible()
-            && child.is_modal()
-            && child.transient_for().as_ref() == Some(window.upcast_ref())
+            && ((child.is_modal() && child.transient_for().as_ref() == Some(window.upcast_ref()))
+                || (child.widget_name() == "focus-session"
+                    && child.application() == window.application()))
         {
             child.present();
             return true;
@@ -112,6 +122,7 @@ fn show_active_dialog(window: &adw::ApplicationWindow) -> bool {
     false
 }
 fn rebuild(window: &adw::ApplicationWindow, repo: &storage::Repository) {
+    appearance::apply(&repo.snapshot().preferences.appearance);
     let toasts = adw::ToastOverlay::new();
     let stack = adw::ViewStack::new();
     let progress = gtk::Box::builder()
@@ -249,7 +260,59 @@ fn rebuild(window: &adw::ApplicationWindow, repo: &storage::Repository) {
             .tooltip_text(i18n::tr("Acerca de Bosu"))
             .build(),
     );
+    let focus = gio::SimpleAction::new("focus-preview", None);
+    focus.connect_activate(glib::clone!(
+        #[weak]
+        window,
+        #[strong]
+        repo,
+        #[strong]
+        flush,
+        #[weak]
+        toasts,
+        move |_, _| {
+            if let Err(error) = flush() {
+                toasts.add_toast(toast(&error));
+                return;
+            }
+            if show_active_dialog(&window) {
+                return;
+            }
+            let guided = focus_mode::present(&window, &repo);
+            guided.connect_hide(glib::clone!(
+                #[weak]
+                window,
+                #[strong]
+                repo,
+                move |_| {
+                    rebuild(&window, &repo);
+                    window.present();
+                }
+            ));
+        }
+    ));
+    if let Some(app) = window.application() {
+        app.add_action(&focus);
+    }
+    let testing = gio::SimpleAction::new("motion-testing", None);
+    testing.connect_activate(glib::clone!(
+        #[weak]
+        toasts,
+        move |_, _| {
+            if let Err(error) = motion::open() {
+                toasts.add_toast(toast(&format!("No se pudo abrir Testing: {error}")));
+            }
+        }
+    ));
+    if let Some(app) = window.application() {
+        app.add_action(&testing);
+    }
     let menu = gio::Menu::new();
+    menu.append(Some("Modo enfoque (prueba)"), Some("app.focus-preview"));
+    menu.append(
+        Some("Testing · Movimiento (experimental)"),
+        Some("app.motion-testing"),
+    );
     menu.append(Some(&i18n::tr("Preferencias")), Some("app.preferences"));
     menu.append(Some(&i18n::tr("Atajos de teclado")), Some("app.shortcuts"));
     menu.append(Some(&i18n::tr("Acerca de Bosu")), Some("app.about"));

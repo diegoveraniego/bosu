@@ -24,6 +24,8 @@ pub struct Preferences {
     pub snooze_until: String,
     #[serde(default)]
     pub language: String,
+    #[serde(default)]
+    pub appearance: String,
 }
 impl Default for Preferences {
     fn default() -> Self {
@@ -34,6 +36,7 @@ impl Default for Preferences {
             reminder_last_date: String::new(),
             snooze_until: String::new(),
             language: String::new(),
+            appearance: String::new(),
         }
     }
 }
@@ -79,6 +82,42 @@ impl Default for Store {
             preferences: Preferences::default(),
             deleted: None,
         }
+    }
+}
+impl Store {
+    /// Resume today's saved work instead of the empty form left after saving.
+    pub fn session_for_day(&self, key: &str, today: &str) -> Option<RegistroSesion> {
+        let draft = self.drafts.get(key);
+        if let Some(draft) = draft {
+            let has_changes = self.sessions.iter().any(|s| s.id == draft.id)
+                || draft.fecha != today
+                || !draft.notas.trim().is_empty()
+                || draft.dolor.is_some()
+                || draft.esfuerzo.is_some()
+                || draft.mapa_antes.is_some()
+                || draft.mapa_despues.is_some()
+                || draft.ejercicios.iter().any(|e| {
+                    e.estado != crate::models::ExerciseState::Pending
+                        || !e.realizado.trim().is_empty()
+                        || !e.motivo.trim().is_empty()
+                });
+            if has_changes {
+                return Some(draft.clone());
+            }
+        }
+        self.sessions
+            .iter()
+            .filter(|s| {
+                s.fecha == today
+                    && if key == "__rest__" {
+                        s.rutina_id.is_none()
+                    } else {
+                        s.rutina_id.as_deref() == Some(key) && !s.ejercicios.is_empty()
+                    }
+            })
+            .max_by(|a, b| a.registrado_en.cmp(&b.registrado_en))
+            .cloned()
+            .or_else(|| draft.cloned())
     }
 }
 #[derive(Serialize, Deserialize)]
@@ -230,7 +269,9 @@ impl Repository {
         session.prepare();
         validate_session(&session)?;
         self.update(|data| {
-            if !data.sessions.iter().any(|s| s.id == session.id) {
+            if let Some(existing) = data.sessions.iter_mut().find(|s| s.id == session.id) {
+                *existing = session;
+            } else {
                 data.sessions.push(session);
             }
             data.drafts.remove(key);
@@ -513,6 +554,86 @@ mod tests {
         assert_eq!(repo.snapshot().sessions[0].id, id);
         assert_eq!(repo.all_maps()[0].session_id.as_deref(), Some(id.as_str()));
         fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn today_resumes_saved_work_and_updates_it_without_duplicates() {
+        let root = folder();
+        let repo = Repository::open(root.clone()).unwrap();
+        let routine = repo.snapshot().config.rutinas[0].clone();
+        let mut session = RegistroSesion::new(Some(&routine));
+        let today = session.fecha.clone();
+        session.ejercicios[0].estado = crate::models::ExerciseState::Done;
+        repo.save_session(&routine.id, session.clone()).unwrap();
+        // Older versions left an empty draft after saving.
+        repo.update(|data| {
+            data.drafts
+                .insert(routine.id.clone(), RegistroSesion::new(Some(&routine)));
+            Ok(())
+        })
+        .unwrap();
+        let reopened = Repository::open(root.clone()).unwrap();
+        let mut resumed = reopened
+            .snapshot()
+            .session_for_day(&routine.id, &today)
+            .unwrap();
+        assert_eq!(resumed.id, session.id);
+        assert_eq!(resumed.ejercicios_completados, 1);
+        resumed.ejercicios[1].estado = crate::models::ExerciseState::Done;
+        reopened.save_session(&routine.id, resumed.clone()).unwrap();
+        assert_eq!(reopened.snapshot().sessions.len(), 1);
+        assert_eq!(reopened.snapshot().sessions[0].ejercicios_completados, 2);
+        assert_eq!(
+            reopened
+                .snapshot()
+                .session_for_day(&routine.id, &today)
+                .unwrap()
+                .id,
+            session.id
+        );
+        assert!(
+            reopened
+                .snapshot()
+                .session_for_day(&routine.id, "2099-01-01")
+                .is_none()
+        );
+        // Unchecking every exercise is an edit and must survive reopening too.
+        for e in &mut resumed.ejercicios {
+            e.estado = crate::models::ExerciseState::Pending;
+        }
+        resumed.prepare();
+        reopened
+            .update(|data| {
+                data.drafts.insert(routine.id.clone(), resumed);
+                Ok(())
+            })
+            .unwrap();
+        assert_eq!(
+            reopened
+                .snapshot()
+                .session_for_day(&routine.id, &today)
+                .unwrap()
+                .ejercicios_completados,
+            0
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn today_preserves_unsaved_work_and_other_routines() {
+        let mut data = Store::default();
+        let routine = data.config.rutinas[0].clone();
+        let mut saved = RegistroSesion::new(Some(&routine));
+        let today = saved.fecha.clone();
+        saved.ejercicios[0].estado = crate::models::ExerciseState::Done;
+        data.sessions.push(saved);
+        let mut draft = RegistroSesion::new(Some(&routine));
+        draft.notas = "Cambios sin guardar".into();
+        data.drafts.insert(routine.id.clone(), draft.clone());
+        assert_eq!(
+            data.session_for_day(&routine.id, &today).unwrap().id,
+            draft.id
+        );
+        assert!(data.session_for_day("otra-rutina", &today).is_none());
+        assert!(data.session_for_day("__rest__", &today).is_none());
     }
     #[test]
     fn backup_roundtrip_and_failed_import_preserve_current_data() {
